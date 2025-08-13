@@ -1,1 +1,15 @@
-<p>login works!</p>
+<form [formGroup]="loginForm" (ngSubmit)="login()">
+    <div class="form-container" @slideIn>
+        <mat-form-field>
+            <mat-label>Email</mat-label>
+            <input matInput formControlName="email" type="text"/>
+        </mat-form-field>
+        <mat-form-field>
+            <mat-label>Password</mat-label>
+            <input matInput formControlName="password" type="password"/>
+        </mat-form-field>
+    <button color="primary" type="submit" color="primary" mat-raised-button>Login</button>
+    <p>Don't have an account yet?  <a href="/signup">Sign Up</a></p>
+    <p><a href="/signup">Forgot password ?</a></p>
+    </div>
+</form>
