@@ -1,0 +1,1 @@
+export const enviroment = {apiHost: 'https://localhost:44333/api/'}
