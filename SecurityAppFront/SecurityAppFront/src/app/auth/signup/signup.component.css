@@ -35,3 +35,24 @@ div {
     background-repeat: no-repeat;
     position: relative;
   }
+
+.very-weak{
+  color:rgb(207, 73, 0)
+}
+
+.weak{
+  color:rgb(188, 111, 15)
+}
+
+.medium{
+  color:rgb(209, 176, 13)
+}
+
+.strong
+{
+  color: rgb(131, 198, 32)
+}
+
+.very-strong{
+  color:green
+}
