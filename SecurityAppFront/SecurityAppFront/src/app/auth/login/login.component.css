@@ -4,6 +4,9 @@ form {
     justify-content: center;
     
 }
+.btnLogin{
+  padding: 10px 0px;
+}
 
 div {
     width: 400px;

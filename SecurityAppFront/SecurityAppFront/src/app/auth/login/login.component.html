@@ -8,7 +8,10 @@
             <mat-label>Password</mat-label>
             <input matInput formControlName="password" type="password"/>
         </mat-form-field>
-    <button color="primary" type="submit" color="primary" mat-raised-button>Login</button>
+
+        <div class="captcha" id="recaptcha-container"></div>
+    
+    <button class="btnLogin" color="primary" type="submit" color="primary" mat-raised-button>Login</button>
     <p>Don't have an account yet?  <a href="/signup">Sign Up</a></p>
     <p><a href="/signup">Forgot password ?</a></p>
     </div>
