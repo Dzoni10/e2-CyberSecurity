@@ -16,6 +16,8 @@ import com.example.securityapp.service.EmailService;
 import com.example.securityapp.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -105,6 +107,36 @@ public class UserController {
             AuthenticationResponse response = new AuthenticationResponse(token);
 
             return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping(value="/recovery")
+    public ResponseEntity<?> recovery( @RequestBody LogInRequest logInRequest){
+
+        System.out.println(logInRequest.getEmail());
+        User user = userService.findByEmail(logInRequest.getEmail());
+
+        if (user == null) {
+            return new ResponseEntity<>("User doesn't exist", HttpStatus.NOT_FOUND);
+        }
+
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        String hash = encoder.encode(logInRequest.getPassword());
+        user.setPassword(hash);
+        user.setVerified(false);
+
+        UserDTO userDTO = userDTOMapper.fromUserToDTO(user);
+        userDTO.email=user.getEmail() ;
+
+        try {
+            userService.save(user);
+            String activationLink = "http://localhost:8080/api/users/verify?email=" + logInRequest.getEmail();
+            emailService.sendPasswordRecoveryEmail(userDTO, activationLink);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(Map.of("message", "Successfully changed password"));
+        } catch (Exception e) {
+            return new ResponseEntity<>("Cannot change password",HttpStatus.NOT_ACCEPTABLE);
+        }
+
     }
 
 

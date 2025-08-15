@@ -31,16 +31,18 @@ public class EmailService {
         helper.setSubject("SecurityCertificateApp™ - Verification mail");
 
         String verificationUrl = link;
-        String htmlMsg = "<p>Pozdrav " + userDTO.name + ",</p>"
-                + "<p>Klikni na link ispod kako bi izvršio verifikaciju:</p>"
-                + "<a href='" + verificationUrl + "'>Verifikuj svoj nalog</a>"
-                + "<p>Hvala!</p>";
+        String htmlMsg = "<p>Hello " + userDTO.name + ",</p>"
+                + "<p>Click on the link below to verify your account</p>"
+                + "<a href='" + verificationUrl + "'>Verify account</a>"
+                + "<p>Thank you!</p>"
+                +"<p>Your SecurityCertificateApp team</p>";
 
         helper.setText(htmlMsg, true);
         mailSender.send(mail);
     }
 
-    public void SendInactivityEmail(UserDTO userDTO, String link) throws MailException, InterruptedException, MessagingException {
+    @Async
+    public void sendPasswordRecoveryEmail(UserDTO userDTO, String link) throws MailException, InterruptedException, MessagingException {
         MimeMessage mail = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(mail, true);
 
@@ -48,8 +50,13 @@ public class EmailService {
         helper.setFrom(env.getProperty("spring.mail.username"));
         helper.setSubject("SecurityCertificateApp™ - Password recovery ");
 
-        String htmlMsg = "<p>Pozdrav " + userDTO.name + ",</p>"
-                + "<p>To create your new password click on linky below</p>"
-                + "<a href='" +link + "'>Change password</a>";
+        String htmlMsg = "<p>Hello " + userDTO.name + ",</p>"
+                + "<p>To verify your new password click on link below</p>"
+                + "<a href='" +link + "'>Verify password</a>"
+                +"<p>Thank you</p>"
+                +"<p>Your SecurityCertificateApp team</p>";
+
+        helper.setText(htmlMsg, true);
+        mailSender.send(mail);
     }
 }

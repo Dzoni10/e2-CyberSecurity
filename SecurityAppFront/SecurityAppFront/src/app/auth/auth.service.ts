@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { Register } from './model/Register.model';
 import {jwtDecode} from 'jwt-decode'
 import { AuthResponse } from './model/AuthResponse';
+import { Recovery } from './model/Recovery.model';
 
 @Injectable({
   providedIn: 'root'
@@ -25,6 +26,10 @@ export class AuthService {
    login(email: string, password: string):  Observable<AuthResponse>{
     const body = {email, password};
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`,body)
+  }
+
+  passRecovery(recovery: Recovery): Observable<any>{
+    return this.http.post(`${this.apiUrl}/recovery`,recovery);
   }
 
   saveToken(token: string){
