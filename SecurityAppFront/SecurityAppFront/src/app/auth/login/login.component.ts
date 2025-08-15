@@ -1,10 +1,12 @@
-import { Component } from '@angular/core';
+import { Component,AfterViewInit } from '@angular/core';
 import { FormGroup,FormControl,Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {trigger,state,style,transition,animate} from '@angular/animations'
 import { AuthService } from '../auth.service';
 import { Router } from '@angular/router';
 import { MatFormFieldControl } from '@angular/material/form-field';
+
+declare const grecaptcha: any;
 
 @Component({
   selector: 'app-login',
@@ -20,7 +22,9 @@ import { MatFormFieldControl } from '@angular/material/form-field';
   ]
 })
 
-export class LoginComponent {
+export class LoginComponent implements AfterViewInit {
+
+  recaptchaToken: string | null = null;
 
   loginForm = new FormGroup({
     email: new FormControl('', [Validators.required]),
@@ -29,7 +33,24 @@ export class LoginComponent {
 
   constructor(private authService: AuthService,private snackBar: MatSnackBar,private router: Router){}
 
+  ngAfterViewInit(): void {
+    if (grecaptcha) {
+      grecaptcha.render('recaptcha-container', {
+        sitekey: '6Ldm3qUrAAAAADxjsnZHzG4HdMmsCjdKrgFHRmBB',
+        callback: (response: string) => {
+          this.recaptchaToken = response;
+        }
+      });
+    }
+  }
+
   login(): void{
+
+    if(!this.recaptchaToken)
+    {
+      this.snackBar.open("Please verify you are not a robot","Close",{duration:3000,horizontalPosition:"center"})
+      return;
+    }
     
     if(this.loginForm.value.email !==null){
       this.authService.login(this.loginForm.get('email')!.value!, this.loginForm.get('password')!.value!).subscribe({

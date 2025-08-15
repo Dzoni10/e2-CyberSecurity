@@ -16,6 +16,11 @@
         <mat-form-field>
             <mat-label>Password</mat-label>
             <input matInput formControlName="password" (input)="checkPasswordStrength()" type="password"/>
+            <p *ngIf="passwordStrength===0&& signupForm.get('password')?.value" class="very-weak">Very weak</p>
+            <p *ngIf="passwordStrength===1" class="weak">Weak</p>
+            <p *ngIf="passwordStrength===2" class="medium">Medium</p>
+            <p *ngIf="passwordStrength===3" class="strong">Strong</p>
+            <p *ngIf="passwordStrength===4" class="very-strong">Very strong</p>
         </mat-form-field>
         <mat-form-field>
         <mat-label>Input password again</mat-label>

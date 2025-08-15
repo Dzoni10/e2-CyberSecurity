@@ -45,7 +45,7 @@ export class SignupComponent  implements OnInit{
         return; 
       }
       
-      const { password2, ...payload } = this.signupForm.value; // izbacujemo password2
+      const { password2, ...payload } = this.signupForm.value; // izbacujem password2
       this.authService.register(payload).subscribe({
         next: res=> {
           console.log("REGISTER SUCCESS");

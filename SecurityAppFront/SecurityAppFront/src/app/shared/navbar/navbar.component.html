@@ -2,7 +2,10 @@
     <div class="navbar-title">Security Certificate App<sup>™</sup></div>
 
     <div class="navbar-buttons">
-         <button mat-raised-button *ngIf="isLoggedIn()&&isLoggedBasic()" class="basic-button">Basic certificate</button>
+        <button mat-raised-button *ngIf="isLoggedIn()&&isLoggedAdmin()" class="create-certificate-button">Create certificate</button>
+        <button mat-raised-button *ngIf="isLoggedIn()&&isLoggedCA()" class="create-ca-certificate-button">Create CA certificate</button>
+        <button mat-raised-button *ngIf="isLoggedIn()" class="profile-button">User Profile</button>
+        <button mat-raised-button *ngIf="isLoggedIn()&&isLoggedBasic()" class="basic-button">Basic certificates</button>
         <button mat-raised-button *ngIf="isLoggedIn()&&isLoggedCA()" class="ca-button">CA certificates</button>
         <button mat-raised-button *ngIf="isLoggedIn()&&isLoggedAdmin()" class="admin-button">All certificates</button>
         <button mat-raised-button *ngIf="!isLoggedIn()" class="login-button" [routerLink]="['login']">Log in</button>
