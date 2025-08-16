@@ -2,6 +2,8 @@ package com.example.securityapp.controller;
 
 import com.example.securityapp.auth.AuthenticationResponse;
 import com.example.securityapp.auth.JwtUtil;
+import com.example.securityapp.auth.SessionInfo;
+import com.example.securityapp.auth.SessionRegistry;
 import com.example.securityapp.domain.Role;
 import com.example.securityapp.domain.User;
 import com.example.securityapp.dto.LogInRequest;
@@ -15,8 +17,11 @@ import org.springframework.web.bind.annotation.*;
 import com.example.securityapp.service.EmailService;
 import com.example.securityapp.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.servlet.http.HttpServletRequest;
 
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users")
@@ -34,6 +39,9 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private SessionRegistry sessionRegistry;
+
     @Operation(description = "Create new user", method = "POST")
     @PostMapping(value="/signup")
     public ResponseEntity<?> signup(@RequestBody UserDTO userDTO) {
@@ -49,7 +57,7 @@ public class UserController {
         savedUser.setName(userDTO.name);
         savedUser.setSurname(userDTO.surname);
         savedUser.setOrganization(userDTO.organization);
-        savedUser.setRole(Role.ROLE_BASIC);
+        savedUser.setRole(Role.BASIC);
 
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         String hash = encoder.encode(userDTO.password);
@@ -81,8 +89,7 @@ public class UserController {
     }
 
     @PostMapping(value="/login")
-    public ResponseEntity<?> login( @RequestBody LogInRequest logInRequest){
-
+    public ResponseEntity<?> login( @RequestBody LogInRequest logInRequest,HttpServletRequest request){
 
         User user = userService.findByEmail(logInRequest.getEmail());
 
@@ -102,7 +109,16 @@ public class UserController {
 
         UserDTO userDTO = new UserDTO();
 
-            String token = jwtUtil.generateToken(user.getId(), user.getRole());
+            String sessionId = UUID.randomUUID().toString();
+            String token = jwtUtil.generateToken(user.getId(), user.getRole(),sessionId);
+
+            String ipAddress = request.getHeader("X-Forwarded-For");
+            if (ipAddress == null || ipAddress.isEmpty()) {
+                ipAddress = request.getRemoteAddr();
+            }
+
+            String userAgent = request.getHeader("User-Agent");
+            sessionRegistry.registerSession(sessionId, ipAddress, userAgent, user.getId());
 
             AuthenticationResponse response = new AuthenticationResponse(token);
 
@@ -136,7 +152,19 @@ public class UserController {
         } catch (Exception e) {
             return new ResponseEntity<>("Cannot change password",HttpStatus.NOT_ACCEPTABLE);
         }
+    }
 
+    //dobavljanje sesije
+    @GetMapping("/sessions")
+    public ResponseEntity<List<SessionInfo>> getActiveSessions(@RequestParam int userId) {
+        return ResponseEntity.ok(sessionRegistry.getUserSessions(userId));
+    }
+
+    //gasenje sesije
+    @DeleteMapping("/sessions/{sessionId}")
+    public ResponseEntity<Void> revokeSession(@PathVariable String sessionId) {
+        sessionRegistry.removeSession(sessionId);
+        return ResponseEntity.ok().build();
     }
 
 

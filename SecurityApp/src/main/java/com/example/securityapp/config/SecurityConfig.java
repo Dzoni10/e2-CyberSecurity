@@ -1,5 +1,7 @@
 package com.example.securityapp.config;
 
+import com.example.securityapp.auth.JwtAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -12,10 +14,15 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import com.example.securityapp.service.CustomUserDetailsService;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
+
+    @Autowired
+    JwtAuthenticationFilter jwtAuthenticationFilter;
+
 
     //@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection") //resava problem http objekta
     @Bean
@@ -28,11 +35,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/users/verify").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/recovery").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/sessions").hasRole("BASIC")
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .httpBasic(httpBasic->{})
-                .formLogin(form->form.disable());
+                .formLogin(form->form.disable())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); // ⬅ dodato
 
         return http.build();
     }

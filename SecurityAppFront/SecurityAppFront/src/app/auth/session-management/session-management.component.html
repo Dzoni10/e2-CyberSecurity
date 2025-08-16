@@ -1,0 +1,17 @@
+<div class="session-management-container" *ngIf="sessions && sessions.length > 0; else noSessions">
+  <h2>Active Sessions</h2>
+  <div *ngFor="let session of sessions" class="session-card">
+    <div class="session-info">
+      <p><strong>Device / Browser (UserAgent):</strong> {{session.userAgent}}</p>
+      <p><strong>IP Address:</strong> {{session.ipAddress}}</p>
+      <p><strong>Last Activity:</strong> {{session.lastActivity| date:'medium'}}</p>
+    </div>
+    <div class="session-actions">
+      <button (click)="logoutSession(session.sessionId)">Log Out</button>
+    </div>
+  </div>
+</div>
+
+<ng-template #noSessions>
+  <p>No active sessions found.</p>
+</ng-template>

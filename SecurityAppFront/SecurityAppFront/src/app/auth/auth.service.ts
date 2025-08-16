@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { DecodedToken } from './model/decodedToken.model';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Register } from './model/Register.model';
 import {jwtDecode} from 'jwt-decode'
 import { AuthResponse } from './model/AuthResponse';
 import { Recovery } from './model/Recovery.model';
+import { SessionInfo } from './model/SessionInfo';
 
 @Injectable({
   providedIn: 'root'
@@ -31,6 +32,31 @@ export class AuthService {
   passRecovery(recovery: Recovery): Observable<any>{
     return this.http.post(`${this.apiUrl}/recovery`,recovery);
   }
+
+  getActiveSessions(userId: number): Observable<SessionInfo[]> {
+  return this.http.get<SessionInfo[]>(`${this.apiUrl}/sessions`, {
+    params: { userId: userId.toString() },
+    headers: this.getAuthHeaders()   // <--- dodato
+  });
+}
+
+revokeSession(sessionId: string): Observable<void> {
+  return this.http.delete<void>(`${this.apiUrl}/sessions/${sessionId}`,{
+    headers:this.getAuthHeaders()     // <--- dodato
+  }
+    
+  );
+}
+
+private getAuthHeaders(): HttpHeaders {
+  const token = this.getToken();
+  let headers = new HttpHeaders();
+  if(token)
+  {
+    headers=headers.set('Authorization',`Bearer ${token}`);
+  }
+  return headers;
+}
 
   saveToken(token: string){
     localStorage.setItem('jwtToken',token)

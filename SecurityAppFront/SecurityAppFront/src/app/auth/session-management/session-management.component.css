@@ -1,0 +1,32 @@
+.session-management-container {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.session-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #ddd;
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.session-info p {
+  margin: 4px 0;
+}
+
+.session-actions button {
+  padding: 6px 12px;
+  background-color: #ff4d4f;
+  border: none;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.session-actions button:hover {
+  background-color: #ff7875;
+}
