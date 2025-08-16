@@ -10,7 +10,7 @@ import { SessionInfo } from '../model/SessionInfo';
 export class SessionManagementComponent implements OnInit{
 
 
-  sessions: SessionInfo[] = []; 
+  sessions: SessionInfo[]=[];
 
   constructor(private authSerivce:AuthService){}
 

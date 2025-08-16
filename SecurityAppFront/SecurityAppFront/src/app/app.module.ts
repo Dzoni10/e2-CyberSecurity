@@ -10,6 +10,10 @@ import { AuthInterceptor } from './auth/Interceptor-jwt/jwt-interceptor';
 import { AuthModule } from './auth/auth.module';
 import { NavbarComponent } from './shared/navbar/navbar.component';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatCardModule } from '@angular/material/card';
+import { CommonModule } from '@angular/common';
+import { CertificatesModule } from './certificates/certificates.module';
 
 
 @NgModule({
@@ -18,11 +22,15 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
     NavbarComponent
   ],
   imports: [
+    CommonModule,
     BrowserModule,
     AppRoutingModule,
     BrowserAnimationsModule,
     HttpClientModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatProgressSpinnerModule,
+    MatCardModule,
+    CertificatesModule
   ],
   providers: [
     {provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi:true}
