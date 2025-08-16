@@ -7,14 +7,16 @@ import {MatButtonModule} from '@angular/material/button'
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatOptionModule } from '@angular/material/core';
 import {MatInputModule} from '@angular/material/input';
-import { PassRecoveryComponent } from './pass-recovery/pass-recovery.component'
+import { PassRecoveryComponent } from './pass-recovery/pass-recovery.component';
+import { SessionManagementComponent } from './session-management/session-management.component'
 
 
 @NgModule({
   declarations: [
     LoginComponent,
     SignupComponent,
-    PassRecoveryComponent
+    PassRecoveryComponent,
+    SessionManagementComponent
   ],
   imports: [
     CommonModule,
