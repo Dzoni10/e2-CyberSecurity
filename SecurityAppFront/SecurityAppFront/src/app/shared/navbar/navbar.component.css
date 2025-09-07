@@ -136,7 +136,7 @@
     box-shadow: none ;
 }
 
-.create-certificate-button
+.create-root-certificate-button
 {
     background-color:#412fb7;
     color:  #f7f6f5;
@@ -150,7 +150,7 @@
     margin-right: 10px;
 }
 
-.create-certificate-button:hover{
+.create-root-certificate-button:hover{
     background-color: #6354c7 ;
     color: #becbd2 ;
     box-shadow: none ;

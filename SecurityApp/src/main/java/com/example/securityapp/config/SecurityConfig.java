@@ -35,6 +35,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/users/verify").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/recovery").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/certificates/all").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/certificates/issue").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/users/sessions").hasRole("BASIC")
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
                         .anyRequest().authenticated()
@@ -68,12 +70,5 @@ public class SecurityConfig {
         return authProvider;
     }
 
-//    @Bean
-//    public AuthenticationManagerBuilder authenticationManagerBuilder(
-//            AuthenticationManagerBuilder auth,
-//            DaoAuthenticationProvider authenticationProvider) {
-//        auth.authenticationProvider(authenticationProvider);
-//        return auth;
-//    }
 
 }

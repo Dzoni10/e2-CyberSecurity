@@ -1,0 +1,23 @@
+<div class="container">
+  <h2 class="title">📜 Certificates</h2>
+
+  <mat-progress-spinner *ngIf="loading" mode="indeterminate"></mat-progress-spinner>
+
+  <div class="grid" *ngIf="!loading">
+    <mat-card *ngFor="let cert of certificates" class="certificate-card" appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>{{ cert.alias }}</mat-card-title>
+        <mat-card-subtitle>Serial: {{ cert.serialNumber }}</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <p><b>Subject:</b> {{ cert.subject }}</p>
+        <p><b>Issuer:</b> {{ cert.issuer }}</p>
+        <p><b>Valid From:</b> {{ cert.startDate | date }}</p>
+        <p><b>Valid To:</b> {{ cert.endDate | date }}</p>
+        <p><b>CA:</b> {{ cert.isCA ? 'CA' : 'NonCA' }}</p>
+        <p><b>Revoked:</b> {{ cert.revoked ? 'Revoked' : 'Active' }}</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

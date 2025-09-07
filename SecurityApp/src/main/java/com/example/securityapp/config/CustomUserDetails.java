@@ -43,4 +43,6 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {return user.isVerified();}
+
+    public User getUser() {return user;}
 }
