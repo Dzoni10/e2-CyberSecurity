@@ -1,7 +1,7 @@
 export interface CertificateRequestDTO{
     subject:string,
-    issuerId:number,
+    issuerId:number | null,
     durationInDays:number,
     isCA: boolean,
-    extensions: Map<string,string>;
+    extensions: { [key: string]: string };
 }

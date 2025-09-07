@@ -1,9 +1,6 @@
 package com.example.securityapp.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 import java.time.LocalDate;
 
@@ -24,15 +21,24 @@ public class Certificate {
     private boolean isCA;
     private boolean revoked;
 
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String publicKey;
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String privateKey;
 
     // JSON string za ekstenzije (keyUsage, basicConstraints, ...)
+    @Lob
+    @Column(columnDefinition = "TEXT")
     private String extensions;
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String encodedCertificate;
 
     public Certificate() {}
 
-    public Certificate(int id,String alias,String serialNumber,String subject,String issuer, LocalDate startDate,LocalDate endDate, boolean isCA, boolean revoked, String publicKey, String privateKey, String extensions) {
+    public Certificate(int id,String alias,String serialNumber,String subject,String issuer, LocalDate startDate,LocalDate endDate, boolean isCA, boolean revoked, String publicKey, String privateKey, String extensions,String encodedCertificate) {
         this.id = id;
         this.alias = alias;
         this.serialNumber = serialNumber;
@@ -45,9 +51,10 @@ public class Certificate {
         this.publicKey = publicKey;
         this.privateKey = privateKey;
         this.extensions = extensions;
+        this.encodedCertificate=encodedCertificate;
     }
 
-    public Certificate(String alias,String serialNumber,String subject,String issuer, LocalDate startDate,LocalDate endDate, boolean isCA, boolean revoked, String publicKey, String privateKey, String extensions){
+    public Certificate(String alias,String serialNumber,String subject,String issuer, LocalDate startDate,LocalDate endDate, boolean isCA, boolean revoked, String publicKey, String privateKey, String extensions,String encodedCertificate){
         this.alias = alias;
         this.serialNumber = serialNumber;
         this.subject = subject;
@@ -59,6 +66,7 @@ public class Certificate {
         this.publicKey = publicKey;
         this.privateKey = privateKey;
         this.extensions = extensions;
+        this.encodedCertificate=encodedCertificate;
     }
 
     public void setId(int id) {
@@ -155,5 +163,11 @@ public class Certificate {
 
     public void setPrivateKey(String privateKey) {
         this.privateKey = privateKey;
+    }
+    public String getEncodedCertificate(){
+        return encodedCertificate;
+    }
+    public void setEncodedCertificate(String encodedCertificate){
+        this.encodedCertificate=encodedCertificate;
     }
 }

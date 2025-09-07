@@ -5,6 +5,7 @@ import com.example.securityapp.dto.CertificateResponseDTO;
 import com.example.securityapp.service.CertificateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,6 +21,7 @@ public class CertificateController {
     public ResponseEntity<List<CertificateResponseDTO>> getAll() {
         return ResponseEntity.ok(certificateService.getAllCertificates());
     }
+
 
     @PostMapping(value="/issue")
     public CertificateResponseDTO issueCertificate(@RequestBody CertificateRequestDTO request){

@@ -46,7 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 sessionRegistry.updateLastActivity(sessionId);
 
                 UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(claims.get("userId").toString(), null,
+                        new UsernamePasswordAuthenticationToken(userId, null,
                                 authorities);
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);//ubacivanje autentifikovanog korisnika u context holder
