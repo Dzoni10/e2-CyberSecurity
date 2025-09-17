@@ -18,6 +18,11 @@ export class CertificatesService {
     return this.http.get<CertificateResponse[]>(`${this.apiUrl}/all`,{headers:this.getAuthHeaders()});
   }
 
+  getCACertificates(): Observable<CertificateResponse[]>{
+    console.log("d")
+    return this.http.get<CertificateResponse[]>(`${this.apiUrl}/ca`,{headers:this.getAuthHeaders()});
+  }
+
   issueCertificate(request: CertificateRequestDTO) {
   return this.http.post<CertificateResponse>(`${this.apiUrl}/issue`, request,{headers: this.getAuthHeaders()});
 }

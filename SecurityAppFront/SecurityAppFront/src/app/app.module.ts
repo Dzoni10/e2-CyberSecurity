@@ -14,6 +14,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { CommonModule } from '@angular/common';
 import { CertificatesModule } from './certificates/certificates.module';
+import { CsrFormComponent } from './csr/csr-form/csr-form.component';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { CsrModule } from './csr/csr.module';
 
 
 @NgModule({
@@ -30,7 +33,8 @@ import { CertificatesModule } from './certificates/certificates.module';
     MatSnackBarModule,
     MatProgressSpinnerModule,
     MatCardModule,
-    CertificatesModule
+    CertificatesModule,
+    CsrModule
   ],
   providers: [
     {provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi:true}

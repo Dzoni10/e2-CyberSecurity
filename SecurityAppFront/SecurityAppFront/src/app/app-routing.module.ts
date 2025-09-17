@@ -6,6 +6,7 @@ import { PassRecoveryComponent } from './auth/pass-recovery/pass-recovery.compon
 import { SessionManagementComponent } from './auth/session-management/session-management.component';
 import { CreateRootCertificateComponent } from './certificates/create-root-certificate/create-root-certificate.component';
 import { CertificateListComponent } from './certificates/certificate-list/certificate-list.component';
+import { CsrFormComponent } from './csr/csr-form/csr-form.component';
 
 const routes: Routes = [
    { path: 'login', component: LoginComponent },
@@ -13,7 +14,8 @@ const routes: Routes = [
    { path: 'recovery', component:PassRecoveryComponent},
    { path: 'activeTokens', component:SessionManagementComponent},
    { path: 'createRootCertificate', component:CreateRootCertificateComponent},
-   { path: 'certificateList', component:CertificateListComponent}
+   { path: 'certificateList', component:CertificateListComponent},
+   { path: 'csrForm', component:CsrFormComponent}
 ];
 
 @NgModule({

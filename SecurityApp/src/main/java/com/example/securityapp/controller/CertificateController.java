@@ -22,6 +22,10 @@ public class CertificateController {
         return ResponseEntity.ok(certificateService.getAllCertificates());
     }
 
+    @GetMapping(value="/ca")
+    public ResponseEntity<List<CertificateResponseDTO>> getAllCACertificates() {
+        return ResponseEntity.ok(certificateService.getAllCACertificates());
+    }
 
     @PostMapping(value="/issue")
     public CertificateResponseDTO issueCertificate(@RequestBody CertificateRequestDTO request){

@@ -1,0 +1,40 @@
+<div class="container">
+  <h2>Upload CSR</h2>
+
+  <form [formGroup]="csrForm" (ngSubmit)="submitForm()">
+    <!-- CSR File -->
+    <div>
+      <label for="csrFile">CSR File (.pem or .csr)</label>
+      <input type="file" id="csrFile" (change)="onFileChange($event)" required />
+    </div>
+
+    <!-- Select CA -->
+    <div>
+      <label for="selectedCaId">Select CA</label>
+      <select formControlName="selectedCaId" id="selectedCaId">
+        <option *ngFor="let ca of caList" [value]="ca.id">
+          {{ ca.subject }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Requested duration -->
+    <div>
+      <label for="requestedDurationDays">Requested Duration (days)</label>
+      <input
+        type="number"
+        id="requestedDurationDays"
+        formControlName="requestedDurationDays"
+        required
+      />
+    </div>
+
+    <button type="submit" [disabled]="csrForm.invalid">Submit</button>
+  </form>
+
+  <!-- Status -->
+  <div *ngIf="uploadStatus" style="margin-top: 1rem">
+    <strong>{{ uploadStatus }}</strong>
+  </div>
+</div>
+
