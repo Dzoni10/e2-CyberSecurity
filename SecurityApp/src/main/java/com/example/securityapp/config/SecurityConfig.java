@@ -1,6 +1,7 @@
 package com.example.securityapp.config;
 
 import com.example.securityapp.auth.JwtAuthenticationFilter;
+import com.example.securityapp.service.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,49 +11,66 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import com.example.securityapp.service.CustomUserDetailsService;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.security.Security;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
 @Configuration
+@EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
 
     @Autowired
-    JwtAuthenticationFilter jwtAuthenticationFilter;
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
-
-    //@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection") //resava problem http objekta
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf->csrf.disable())
-                .cors(cors -> {}) //DA BI KORISTIO CORS IZ GLAVNE KLASE WEB MVC CONFIGURER
-                .authorizeHttpRequests(auth-> auth
+        return http
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> {}) // koristi globalni WebMvcConfigurer ako ga imaš
+                .authorizeHttpRequests(auth -> auth
+                        // Swagger potpuno otvoren
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**"
+                        ).permitAll()
+
+                        // Public endpoints
                         .requestMatchers(HttpMethod.POST, "/api/users/signup").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/verify").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/recovery").permitAll()
+
+                        // Protected endpoints (role-based)
                         .requestMatchers(HttpMethod.GET, "/api/certificates/all").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/certificates/ca").hasRole("BASIC")
                         .requestMatchers(HttpMethod.POST, "/api/certificates/issue").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/csr/upload").hasRole("BASIC")
                         .requestMatchers(HttpMethod.GET, "/api/users/sessions").hasRole("BASIC")
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**").permitAll()
+
+                        // Sve ostalo traži auth
                         .anyRequest().authenticated()
                 )
-                .httpBasic(httpBasic->{})
-                .formLogin(form->form.disable())
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); // ⬅ dodato
-
-        return http.build();
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .httpBasic(httpBasic -> {})
+                //.formLogin(form -> {})
+                //.logout(logout -> logout.disable())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
     }
 
-
-   //@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Bean
-    public AuthenticationManager authManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
 
     @Bean
@@ -60,15 +78,11 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Bean
-    public DaoAuthenticationProvider authenticationProvider(CustomUserDetailsService userDetailsService,
-                                                            PasswordEncoder passwordEncoder) {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder);
-        return authProvider;
+    public DaoAuthenticationProvider authProvider(CustomUserDetailsService userDetailsService) {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
     }
-
-
 }

@@ -48,7 +48,7 @@ revokeSession(sessionId: string): Observable<void> {
   );
 }
 
-private getAuthHeaders(): HttpHeaders {
+getAuthHeaders(): HttpHeaders {
   const token = this.getToken();
   let headers = new HttpHeaders();
   if(token)

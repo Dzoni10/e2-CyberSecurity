@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.*;
 import java.security.cert.X509Certificate;
@@ -222,6 +223,21 @@ public class CertificateService {
 
     public List<CertificateResponseDTO> getAllCertificates() {
         return certificateRepository.findAll().stream().map(c->new CertificateResponseDTO(
+                c.getId(),
+                c.getAlias(),
+                c.getSerialNumber(),
+                c.getSubject(),
+                c.getIssuer(),
+                c.getStartDate(),
+                c.getEndDate(),
+                c.isCA(),
+                c.isRevoked()
+        )).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<CertificateResponseDTO> getAllCACertificates() {
+        return certificateRepository.findByIsCATrue().stream().map(c->new CertificateResponseDTO(
                 c.getId(),
                 c.getAlias(),
                 c.getSerialNumber(),
