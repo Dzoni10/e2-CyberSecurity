@@ -8,6 +8,7 @@
         <button mat-raised-button *ngIf="isLoggedIn()&&isLoggedBasic()" class="basic-button">Basic certificates</button>
         <button mat-raised-button *ngIf="isLoggedIn()&&isLoggedBasic()" class="active-token-button" [routerLink]="['activeTokens']">Active tokens</button>
         <button mat-raised-button *ngIf="isLoggedIn()&&isLoggedBasic()" class="basic-button" [routerLink]="['csrForm']">CSR</button>
+        <button mat-raised-button *ngIf="isLoggedIn()&&isLoggedBasic()" class="basic-button" [routerLink]="['password-managment']">Password manager</button>
         <button mat-raised-button *ngIf="isLoggedIn()&&isLoggedCA()" class="ca-button">CA certificates</button>
         <button mat-raised-button *ngIf="isLoggedIn()&&isLoggedAdmin()" class="admin-button" [routerLink]="['certificateList']">All certificates</button>
         <button mat-raised-button *ngIf="!isLoggedIn()" class="login-button" [routerLink]="['login']">Log in</button>

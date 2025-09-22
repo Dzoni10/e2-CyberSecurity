@@ -19,6 +19,7 @@ export class CsrFormComponent implements OnInit {
     this.csrForm = this.fb.group({
       csrFile: [null, Validators.required],
       selectedCaId: [null, Validators.required],
+      privateKeyFile: [null, Validators.required], // DODAJ
       requestedDurationDays: [null, [Validators.required, Validators.min(1)]],
     });
 
@@ -29,12 +30,21 @@ export class CsrFormComponent implements OnInit {
     });
   }
 
-  onFileChange(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      this.csrForm.patchValue({ csrFile: file });
-    }
+onCSRFileChange(event: any) {
+  const file = event.target.files[0];
+  if (file) {
+    this.csrForm.patchValue({ csrFile: file });
   }
+}
+
+onPrivateKeyFileChange(event: any) {
+  const file = event.target.files[0];
+  if (file) {
+    this.csrForm.patchValue({ privateKeyFile: file });
+  }
+}
+
+ 
 
   submitForm() {
     if (this.csrForm.invalid) {
@@ -44,6 +54,7 @@ export class CsrFormComponent implements OnInit {
 
     const formData = new FormData();
     formData.append('csrFile', this.csrForm.get('csrFile')?.value);
+    formData.append('privateKeyFile', this.csrForm.get('privateKeyFile')?.value); 
     formData.append('selectedCaId', this.csrForm.get('selectedCaId')?.value);
     formData.append('requestedDurationDays', this.csrForm.get('requestedDurationDays')?.value);
 
@@ -57,4 +68,3 @@ export class CsrFormComponent implements OnInit {
     });
   }
 }
-

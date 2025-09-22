@@ -71,8 +71,9 @@ public class CSRService {
         csr.setSelectedCaId(request.getSelectedCaId());
         csr.setRequestedDurationDays(request.getRequestedDurationDays());
         csr.setUploadedAt(LocalDateTime.now());
-        //csr.setUploadedByUserId(getCurrentUserId());
+        csr.setUploadedByUserId(getCurrentUserId());
         csr.setStatus(CSRStatus.PENDING);
+        csr.setPublicKey(parseResult.getPublicKeyBase64());
 
         CertificateSigningRequest saved = csrRepository.save(csr);
 
@@ -101,6 +102,7 @@ public class CSRService {
             SubjectPublicKeyInfo pubKeyInfo = pkcs10.getSubjectPublicKeyInfo();
             String algorithm = pubKeyInfo.getAlgorithm().getAlgorithm().getId();
             int keySize = calculateKeySize(pubKeyInfo);
+            String publicKeyBase64 = Base64.getEncoder().encodeToString(pubKeyInfo.getEncoded());
 
             // Kreiraj plain objekt bez Lombok builder-a
             CSRParseResult result = new CSRParseResult();
@@ -108,6 +110,7 @@ public class CSRService {
             result.setPublicKeyAlgorithm(algorithm);
             result.setKeySize(keySize);
             result.setPkcs10(pkcs10);
+            result.setPublicKeyBase64(publicKeyBase64);
 
             return result;
 
@@ -186,14 +189,16 @@ public class CSRService {
         }
     }
 
-    //private Long getCurrentUserId() {
-        // Ako imaš Spring Security:
-         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-         //UserPrincipal user = (UserPrincipal) auth.getPrincipal();
-         //return user.getId();
+    private Integer getCurrentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Object principal = auth.getPrincipal();
 
-        // Za sada samo dummy
-        //return 1L;
-    //}
+        if (principal instanceof Integer) {
+            return (Integer) principal;
+        }
+
+        System.out.println("DEBUG: Cannot determine userId from principal: " + principal);
+        return 1; // fallback - PRIVREMENO
+    }
 
 }

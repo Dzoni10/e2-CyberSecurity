@@ -7,7 +7,7 @@ import { SessionManagementComponent } from './auth/session-management/session-ma
 import { CreateRootCertificateComponent } from './certificates/create-root-certificate/create-root-certificate.component';
 import { CertificateListComponent } from './certificates/certificate-list/certificate-list.component';
 import { CsrFormComponent } from './csr/csr-form/csr-form.component';
-
+import { PasswordManagerComponent } from './password-manager/password-manager.component';
 const routes: Routes = [
    { path: 'login', component: LoginComponent },
    { path: 'signup', component: SignupComponent},
@@ -15,6 +15,7 @@ const routes: Routes = [
    { path: 'activeTokens', component:SessionManagementComponent},
    { path: 'createRootCertificate', component:CreateRootCertificateComponent},
    { path: 'certificateList', component:CertificateListComponent},
+   { path: 'password-managment', component:PasswordManagerComponent},
    { path: 'csrForm', component:CsrFormComponent}
 ];
 

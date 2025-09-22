@@ -3,9 +3,19 @@
 
   <form [formGroup]="csrForm" (ngSubmit)="submitForm()">
     <!-- CSR File -->
+   <!-- <div  >-->
+   <!--   <label for="csrFile">CSR File (.pem or .csr)</label>  -->
+   <!--   <input type="file" id="csrFile" (change)="onFileChange($event)" required /> -->
+  <!--  </div>-->
+<!-- OVO SAM TI ZAMENI SA 2 DRUGE METODE, TJ SAD SE POSTAVLJA I PRIVATAN KLJUC-->
     <div>
-      <label for="csrFile">CSR File (.pem or .csr)</label>
-      <input type="file" id="csrFile" (change)="onFileChange($event)" required />
+      <label for="csrFile">CSR File (.csr)</label>
+      <input type="file" id="csrFile" (change)="onCSRFileChange($event)" required />
+    </div>
+
+    <div>
+      <label for="privateKeyFile">Private Key File (.pem)</label>
+      <input type="file" id="privateKeyFile" (change)="onPrivateKeyFileChange($event)" required />
     </div>
 
     <!-- Select CA -->
@@ -37,4 +47,3 @@
     <strong>{{ uploadStatus }}</strong>
   </div>
 </div>
-

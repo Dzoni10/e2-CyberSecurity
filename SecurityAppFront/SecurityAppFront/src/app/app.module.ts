@@ -17,12 +17,13 @@ import { CertificatesModule } from './certificates/certificates.module';
 import { CsrFormComponent } from './csr/csr-form/csr-form.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CsrModule } from './csr/csr.module';
-
+import { PasswordManagerComponent } from './password-manager/password-manager.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    NavbarComponent
+    NavbarComponent,
+    PasswordManagerComponent
   ],
   imports: [
     CommonModule,
@@ -34,7 +35,9 @@ import { CsrModule } from './csr/csr.module';
     MatProgressSpinnerModule,
     MatCardModule,
     CertificatesModule,
-    CsrModule
+    CsrModule,
+    ReactiveFormsModule,
+    FormsModule
   ],
   providers: [
     {provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi:true}
