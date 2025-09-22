@@ -25,6 +25,11 @@ public class CertificateSigningRequest {
     private Long selectedCaId;      // koji CA je odabran
     private Integer requestedDurationDays;
 
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String publicKey; // Base64 enkodovan javni ključ
+
     // Status
     @Enumerated(EnumType.STRING)
     private CSRStatus status;       // PENDING, APPROVED, REJECTED, ISSUED
@@ -156,6 +161,10 @@ public class CertificateSigningRequest {
     public void setProcessedByUserId(Integer processedByUserId) {
         this.processedByUserId = processedByUserId;
     }
+
+
+    public String getPublicKey() { return publicKey; }
+    public void setPublicKey(String publicKey) { this.publicKey = publicKey; }
 }
 
 

@@ -57,6 +57,17 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/csr/upload").hasRole("BASIC")
                         .requestMatchers(HttpMethod.GET, "/api/users/sessions").hasRole("BASIC")
 
+                       // .requestMatchers(HttpMethod.POST, "/api/password-manager/entries").hasRole("BASIC")
+                        //.requestMatchers(HttpMethod.GET, "/api/password-manager/entries").hasRole("BASIC")
+                        //.requestMatchers(HttpMethod.POST, "/api/password-manager/share").hasRole("BASIC")
+                        //.requestMatchers(HttpMethod.DELETE, "/api/password-manager/entries/**").hasRole("BASIC")
+                        //.requestMatchers(HttpMethod.GET, "/api/password-manager/public-key").hasRole("BASIC")
+                        //.requestMatchers(HttpMethod.GET, "/api/password-manager/public-key/**").hasRole("BASIC")
+
+                        .requestMatchers(HttpMethod.GET, "/api/password-manager/**").hasRole("BASIC")
+                        .requestMatchers(HttpMethod.POST, "/api/password-manager/**").hasRole("BASIC")
+                        .requestMatchers(HttpMethod.DELETE, "/api/password-manager/**").hasRole("BASIC")
+
                         // Sve ostalo traži auth
                         .anyRequest().authenticated()
                 )

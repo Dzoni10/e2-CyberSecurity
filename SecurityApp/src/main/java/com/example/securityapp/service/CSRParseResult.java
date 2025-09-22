@@ -7,7 +7,7 @@ public class CSRParseResult {
     private String publicKeyAlgorithm;
     private int keySize;
     private PKCS10CertificationRequest pkcs10;
-
+    private String publicKeyBase64;
     public CSRParseResult() {}
 
     public String getSubject() {
@@ -41,5 +41,9 @@ public class CSRParseResult {
     public void setPkcs10(PKCS10CertificationRequest pkcs10) {
         this.pkcs10 = pkcs10;
     }
+
+    public String getPublicKeyBase64() { return publicKeyBase64; }
+    public void setPublicKeyBase64(String publicKeyBase64) { this.publicKeyBase64 = publicKeyBase64; }
+
 }
 
