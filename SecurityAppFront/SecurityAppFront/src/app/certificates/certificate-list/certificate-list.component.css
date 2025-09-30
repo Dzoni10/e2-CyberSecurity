@@ -23,3 +23,7 @@
 .certificate-card:hover {
   transform: translateY(-4px);
 }
+.certButtons{
+  width:200px;
+  padding:20px;
+}

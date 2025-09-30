@@ -6,18 +6,30 @@ import java.util.Map;
 
 public class CertificateRequestDTO {
 
-        public String subject;        // Podaci o vlasniku (X500Name string ili posebna polja)
+        public String cn;        // Podaci o vlasniku (X500Name string ili posebna polja)
+        public String o;
+        public String ou;
+        public String c;
         public Integer issuerId;         // ID CA sertifikata koji potpisuje
         public int durationInDays;    // trajanje sertifikata
-        public boolean isCA;          // da li se izdaje kao intermediate ili end-entity
+        public boolean isRoot;
+        public boolean isIntermediate;
+        public boolean isEndEntity;
+        public boolean isCA;
         public Map<String, String> extensions; // npr. keyUsage, basicConstraints, itd.
 
         public CertificateRequestDTO() {}
 
-        public CertificateRequestDTO(String subject, Integer issuerId, int durationInDays, boolean isCA, Map<String, String> extensions) {
-                this.subject = subject;
+        public CertificateRequestDTO(String cn,String o, String ou,String c, Integer issuerId, int durationInDays,boolean isRoot, boolean isIntermediate,boolean isEndEntity,boolean isCA, Map<String, String> extensions) {
+                this.cn = cn;
+                this.o = o;
+                this.ou = ou;
+                this.c = c;
                 this.issuerId = issuerId;
                 this.durationInDays = durationInDays;
+                this.isRoot = isRoot;
+                this.isIntermediate = isIntermediate;
+                this.isEndEntity = isEndEntity;
                 this.isCA = isCA;
                 this.extensions = extensions;
         }

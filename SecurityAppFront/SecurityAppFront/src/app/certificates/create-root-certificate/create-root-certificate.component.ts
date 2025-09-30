@@ -26,9 +26,15 @@ export class CreateRootCertificateComponent implements OnInit {
 
   ngOnInit(): void {
     this.rootForm = this.fb.group({
-      subject:['',Validators.required],
+      cn:['',Validators.required],
+      o:['',Validators.required],
+      ou:['',Validators.required],
+      c:['',Validators.required],
       durationInDays: [365, [Validators.required,Validators.min(1)]],
-      isCA:[true],
+      isRoot:[true],
+      isIntermediate:[false],
+      isEndEntity:[false],
+      isCA:[false],
     extensions: this.fb.control({})
     });
 
@@ -39,10 +45,16 @@ export class CreateRootCertificateComponent implements OnInit {
   onSubmit() {
     if(this.rootForm.valid && this.userId !==null){
       const dto: CertificateRequestDTO={
-        subject:this.rootForm.value.subject,
+        cn:this.rootForm.value.cn,
+        o:this.rootForm.value.o,
+        ou: this.rootForm.value.ou,
+        c: this.rootForm.value.c,
         issuerId: null,
         durationInDays: this.rootForm.value.durationInDays,
-        isCA: this.rootForm.value.isCA,
+        isRoot:true,
+        isIntermediate: false,
+        isEndEntity:false,
+        isCA:this.rootForm.value.isCA,
         extensions:this.rootForm.value.extensions||{}
       };
 

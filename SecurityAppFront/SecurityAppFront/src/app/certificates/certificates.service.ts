@@ -27,6 +27,14 @@ export class CertificatesService {
   return this.http.post<CertificateResponse>(`${this.apiUrl}/issue`, request,{headers: this.getAuthHeaders()});
 }
 
+getCertificateById(id: number): Observable<CertificateResponse> {
+  return this.http.get<CertificateResponse>(`${this.apiUrl}/${id}`,
+    { headers: this.getAuthHeaders() }
+  );
+}
+
+
+
 
 //metoda koja dobavlja header jer u svaki zahtev ka serveru mora da se salje token kako bi se validirao korisik koji je ulogovan
 // i kako bi se znalo sta ulogovan sme da koristi od URL-ova
