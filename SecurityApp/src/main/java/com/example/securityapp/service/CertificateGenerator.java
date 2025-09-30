@@ -45,6 +45,7 @@ public class CertificateGenerator {
             LocalDate notAfter,
             KeyPair subjectKeyPair,
             PrivateKey issuerPrivateKey,
+            X509Certificate issuerCert,
             boolean isRoot,
             boolean isIntermediate,
             boolean isEndEntity,
@@ -100,10 +101,11 @@ public class CertificateGenerator {
 
         AuthorityKeyIdentifier aki;
 
+
         // Authority Key Identifier = iz issuer public key-ja
         // Ako je self-signed (root), AKI == SKI
-        if(subject.equals(issuer)){
-            aki=extUtils.createAuthorityKeyIdentifier(subjectKeyPair.getPublic());
+        if(issuerCert != null){
+            aki=extUtils.createAuthorityKeyIdentifier(issuerCert.getPublicKey());
         }else {
             // U praksi: prosledio bi se issuer public key; ako ga nemaš pri ruci, koristi SKI subjekta kao fallback.
             aki = extUtils.createAuthorityKeyIdentifier(subjectKeyPair.getPublic());

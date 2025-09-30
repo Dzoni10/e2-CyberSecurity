@@ -8,6 +8,8 @@ import { CreateRootCertificateComponent } from './certificates/create-root-certi
 import { CertificateListComponent } from './certificates/certificate-list/certificate-list.component';
 import { CsrFormComponent } from './csr/csr-form/csr-form.component';
 import { PasswordManagerComponent } from './password-manager/password-manager.component';
+import { CreateIntCertificateComponent } from './certificates/create-int-certificate/create-int-certificate.component';
+import { CreateEeCertificateComponent } from './certificates/create-ee-certificate/create-ee-certificate.component';
 const routes: Routes = [
    { path: 'login', component: LoginComponent },
    { path: 'signup', component: SignupComponent},
@@ -16,7 +18,10 @@ const routes: Routes = [
    { path: 'createRootCertificate', component:CreateRootCertificateComponent},
    { path: 'certificateList', component:CertificateListComponent},
    { path: 'password-managment', component:PasswordManagerComponent},
-   { path: 'csrForm', component:CsrFormComponent}
+   { path: 'csrForm', component:CsrFormComponent},
+   {path: 'create-intermediate',component:CreateIntCertificateComponent},
+   {path: 'create-endEntity', component:CreateEeCertificateComponent}
+  
 ];
 
 @NgModule({

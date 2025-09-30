@@ -113,4 +113,13 @@ public class KeyStoreService {
         }
     }
 
+    public X509Certificate loadCertificate(KeyStoreMeta meta, String alias) {
+        try {
+            KeyStore ks = loadKeyStore(meta);
+            return (X509Certificate) ks.getCertificate(alias);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load certificate for alias " + alias, e);
+        }
+    }
+
 }

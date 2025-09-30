@@ -9,11 +9,15 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import {MatSlideToggleModule} from '@angular/material/slide-toggle'
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { CreateIntCertificateComponent } from './create-int-certificate/create-int-certificate.component';
+import { CreateEeCertificateComponent } from './create-ee-certificate/create-ee-certificate.component';
 
 @NgModule({
   declarations: [
     CertificateListComponent,
-    CreateRootCertificateComponent
+    CreateRootCertificateComponent,
+    CreateIntCertificateComponent,
+    CreateEeCertificateComponent
   ],
   imports: [
     CommonModule,

@@ -24,6 +24,15 @@
         <p><b>CA:</b> {{ cert.ca ? 'Yes' : 'No' }}</p>
         <p><b>Status:</b> {{ cert.revoked ? 'Revoked' : 'Active' }}</p>
       </mat-card-content>
+
+      <mat-card-actions>
+        <button *ngIf="cert.root" mat-raised-button class="certButtons" color="primary" (click)="createIntermediate(cert)">
+          Create Intermediate
+        </button>
+        <button *ngIf="cert.intermediate" mat-raised-button class="certButtons" color="accent" (click)="createEndEntity(cert)">
+          Create End Entity
+        </button>
+      </mat-card-actions>
     </mat-card>
   </div>
 </div>

@@ -37,5 +37,9 @@ public class CertificateController {
         certificateService.revokeCertificate(id);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<CertificateResponseDTO> getById(@PathVariable int id) {
+        return ResponseEntity.ok(certificateService.getCertificateById(id));
+    }
 
 }

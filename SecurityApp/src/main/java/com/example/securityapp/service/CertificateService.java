@@ -67,6 +67,7 @@ public class CertificateService {
             // 3) Serijski broj (hex) – koristimo isti i u X.509 i u bazi
             String serialHex = Long.toHexString(System.nanoTime());
 
+            String alias = "cert-" + serialHex;
             // 4) Datumi
             LocalDate start = LocalDate.now();
             LocalDate end = start.plusDays(request.durationInDays);
@@ -93,6 +94,7 @@ public class CertificateService {
                         end,
                         subjectKeyPair,
                         issuerPrivateKey,
+                        null,
                         request.isRoot,
                         request.isIntermediate,
                         request.isEndEntity,
@@ -107,7 +109,7 @@ public class CertificateService {
 
             // 8) Upis u entitet
             Certificate certificate = new Certificate();
-            certificate.setAlias("cert-" + System.currentTimeMillis());
+            certificate.setAlias(alias);
             certificate.setSerialNumber(serialHex);
             certificate.setCn(values.get("CN"));
             certificate.setO(values.get("O"));
@@ -123,11 +125,11 @@ public class CertificateService {
             certificate.setRevoked(false);
             certificate.setExtensions(String.valueOf(request.extensions)); // možeš JSON stringify ako želiš
 
-            // 1. Spremi u keystore
+            // 1. Cuvanje u keystore
             KeyStoreMeta meta = keyStoreService.createAndStoreKeyStore(
                     new X509Certificate[]{x509},
                     subjectKeyPair.getPrivate(),
-                    "cert-" + serialHex,
+                    alias,
                     userId
             );
 
@@ -165,8 +167,42 @@ public class CertificateService {
         if (issuer.getEndDate() != null && issuer.getEndDate().isBefore(LocalDate.now())) {
             throw new RuntimeException("Issuer certificate is expired.");
         }
-        if (!issuer.isIntermediate()) {
+        if (!issuer.isCA()) {
             throw new RuntimeException("Issuer is not a CA; cannot issue new certificates.");
+        }
+
+        if (request.isIntermediate) {
+            if (!issuer.isRoot()) {
+                throw new RuntimeException("Intermediate certificate must be issued only by root cert");
+            }
+
+            if (!request.isCA) {
+                throw new RuntimeException("Intermediate certificate must have isCA=true to issue other certificates.");
+            }
+
+            if (request.isRoot) {
+                throw new RuntimeException("Certificate cannot be both root and intermediate.");
+            }
+        }
+
+        if (request.isEndEntity) {
+            if (!issuer.isIntermediate()) {
+                throw new RuntimeException("End-entity certificate can only be issued by an intermediate certificate. " +
+                        "Issuer (ID: " + issuer.getId() + ") is not an intermediate certificate.");
+            }
+            if (request.isCA) {
+                throw new RuntimeException("End-entity certificate cannot be a CA.");
+            }
+            if (request.isRoot || request.isIntermediate) {
+                throw new RuntimeException("End-entity certificate cannot be root or intermediate.");
+            }
+        }
+
+        LocalDate requestedEnd = LocalDate.now().plusDays(request.durationInDays);
+        if (requestedEnd.isAfter(issuer.getEndDate())) {
+            throw new RuntimeException("Certificate validity period cannot exceed issuer's validity. " +
+                    "Issuer expires on: " + issuer.getEndDate() +
+                    ", requested end date: " + requestedEnd);
         }
 
         // 2) Generiši subject key pair (RSA 2048)
@@ -174,6 +210,8 @@ public class CertificateService {
 
         // 3) Serijski broj (hex) – koristimo isti i u X.509 i u bazi
         String serialHex = Long.toHexString(System.nanoTime());
+
+        String alias = "cert-" + serialHex;
 
         // 4) Datumi
         LocalDate start = LocalDate.now();
@@ -196,6 +234,17 @@ public class CertificateService {
                 issuerMeta,
                 issuer.getAlias()
         );
+
+        if (issuerPrivateKey == null) {
+            throw new RuntimeException("Issuer private key is null for alias: " + issuer.getAlias());
+        }
+
+        X509Certificate issuerCert = keyStoreService.loadCertificate(issuerMeta, issuer.getAlias());
+
+        if (issuerCert == null) {
+            throw new RuntimeException("Issuer certificate is null for alias: " + issuer.getAlias());
+        }
+
         X509Certificate x509;
         try {
             x509 = CertificateGenerator.generateCertificate(
@@ -206,6 +255,7 @@ public class CertificateService {
                     end,
                     subjectKeyPair,
                     issuerPrivateKey,
+                    issuerCert,
                     request.isRoot,
                     request.isIntermediate,
                     request.isEndEntity,
@@ -218,7 +268,7 @@ public class CertificateService {
 
         // 8) Upis u entitet
         Certificate certificate = new Certificate();
-        certificate.setAlias("cert-" + System.currentTimeMillis());
+        certificate.setAlias(alias);
         certificate.setSerialNumber(serialHex);
         certificate.setCn(request.cn);
         certificate.setO(request.o);
@@ -230,14 +280,15 @@ public class CertificateService {
         certificate.setRoot(request.isRoot);
         certificate.setIntermediate(request.isIntermediate);
         certificate.setEndEntity(request.isEndEntity);
+        certificate.setCA(request.isCA);
         certificate.setRevoked(false);
         certificate.setExtensions(String.valueOf(request.extensions)); // možeš JSON stringify ako želiš
 
-        // 1. Spremi u keystore (subject cert i private key)
+        // 1. Cuvanje u keystore (subject cert i private key)
         KeyStoreMeta meta = keyStoreService.createAndStoreKeyStore(
                 new X509Certificate[]{x509},
                 subjectKeyPair.getPrivate(),
-                "cert-" + serialHex,
+                alias,
                 userId
         );
 
@@ -333,6 +384,29 @@ public class CertificateService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to decode issuer private key", e);
         }
+    }
+
+    public CertificateResponseDTO getCertificateById(int id) {
+        Certificate c = certificateRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Certificate not found"));
+
+        return new CertificateResponseDTO(
+                c.getId(),
+                c.getAlias(),
+                c.getSerialNumber(),
+                c.getCn(),
+                c.getO(),
+                c.getOu(),
+                c.getC(),
+                c.getIssuer(),
+                c.getStartDate(),
+                c.getEndDate(),
+                c.isRoot(),
+                c.isIntermediate(),
+                c.isEndEntity(),
+                c.isCA(),
+                c.isRevoked()
+        );
     }
 
 }

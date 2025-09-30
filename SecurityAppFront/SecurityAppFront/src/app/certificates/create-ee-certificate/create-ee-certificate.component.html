@@ -1,0 +1,33 @@
+
+<form [formGroup]="endEntityForm" (ngSubmit)="onSubmit()">
+  
+    <div class="form-container" @slideIn>
+      <mat-label>Subject</mat-label>
+        <mat-form-field>
+            <mat-label>Common Name (CN)</mat-label>
+            <input matInput formControlName="cn" type="text" placeholder="Input CN (exp. CN=Admin Root)"/>
+        </mat-form-field> 
+        <mat-form-field>
+            <mat-label>Organization (O)</mat-label>
+            <input matInput formControlName="o" type="text" placeholder="Input organization (exp. O=Organization)"/>
+        </mat-form-field>
+        <mat-form-field>
+            <mat-label>Organization Unit (OU)</mat-label>
+            <input matInput formControlName="ou" type="text" placeholder="Input organization unit (exp. OU=Organization...)"/>
+        </mat-form-field>
+        <mat-form-field>
+            <mat-label>Country (C)</mat-label>
+            <input matInput formControlName="c" type="text" placeholder="Input conutry (exp. C=Serbia)"/>
+        </mat-form-field>
+        <mat-form-field>
+            <mat-label>Duration (in days)</mat-label>
+            <input matInput formControlName="durationInDays" type="number" [max]="maxDays" min="1"/>
+            <mat-hint>Max: {{maxDays}} days</mat-hint>
+        </mat-form-field>
+
+        
+
+    <button class="btnRegister" color="primary" type="submit" mat-raised-button>Create</button>
+    </div>
+</form>
+
