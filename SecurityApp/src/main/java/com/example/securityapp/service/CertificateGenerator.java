@@ -3,7 +3,9 @@ package com.example.securityapp.service;
 import com.example.securityapp.domain.Certificate;
 import com.example.securityapp.dto.CertificateRequestDTO;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.asn1.x9.X962NamedCurves;
 import org.bouncycastle.cert.CertIOException;
@@ -43,12 +45,21 @@ public class CertificateGenerator {
             LocalDate notAfter,
             KeyPair subjectKeyPair,
             PrivateKey issuerPrivateKey,
+            boolean isRoot,
+            boolean isIntermediate,
+            boolean isEndEntity,
             boolean isCA,
             Map<String, String> extensions
     ) throws NoSuchAlgorithmException, OperatorCreationException, CertificateException, CertIOException {
+
+        Map<String, String> subjectValues = parseDN(subjectDn);
+
         // ovde ide ceo BouncyCastle kod koji sam ti pisao gore
-        X500Name subject = new X500Name("CN="+subjectDn+", O=SecurityApp" +", C=RS");
-        X500Name issuer = new X500Name("CN=" + issuerDn+ ", O=SecurityApp" +", C=RS");
+        X500Name subject = new X500Name("CN="+subjectValues.get("CN")+", O=" +subjectValues.get("O")+",OU="+subjectValues.get("OU")+", C=" + subjectValues.get("C"));
+
+        Map<String, String> issuerValues = parseDN(issuerDn);
+
+        X500Name issuer = new X500Name("CN=" + issuerValues.get("CN")+ ", O=" + issuerValues.get("O") + ", OU="+issuerValues.get("OU") +", C="+issuerValues.get("C"));
 
         Date start = Date.from(notBefore.atStartOfDay(ZoneId.systemDefault()).toInstant());
         Date end = Date.from(notAfter.atStartOfDay(ZoneId.systemDefault()).toInstant());
@@ -189,5 +200,25 @@ public class CertificateGenerator {
         return map.getOrDefault(key, null);
     }
 
+    public static Map<String, String> parseDN(String dn) {
+        X500Name x500Name = new X500Name(dn);
+        Map<String, String> values = new HashMap<>();
+
+        RDN[] rdns = x500Name.getRDNs();
+        for (RDN rdn : rdns) {
+            if (rdn.getFirst() != null) {
+                if (rdn.getFirst().getType().equals(BCStyle.CN)) {
+                    values.put("CN", rdn.getFirst().getValue().toString());
+                } else if (rdn.getFirst().getType().equals(BCStyle.O)) {
+                    values.put("O", rdn.getFirst().getValue().toString());
+                } else if (rdn.getFirst().getType().equals(BCStyle.OU)) {
+                    values.put("OU", rdn.getFirst().getValue().toString());
+                } else if (rdn.getFirst().getType().equals(BCStyle.C)) {
+                    values.put("C", rdn.getFirst().getValue().toString());
+                }
+            }
+        }
+        return values;
+    }
 
 }

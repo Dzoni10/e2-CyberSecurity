@@ -142,7 +142,7 @@ public class CSRService {
         if (caCert == null) {
             throw new RuntimeException("CA certificate not provided.");
         }
-        if (!caCert.isCA()) {
+        if (!caCert.isIntermediate()) {
             throw new RuntimeException("Selected certificate is not a valid CA.");
         }
         if (caCert.isRevoked()) {

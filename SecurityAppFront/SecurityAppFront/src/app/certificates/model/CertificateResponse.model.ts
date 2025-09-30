@@ -2,10 +2,16 @@ export interface CertificateResponse{
     id: number,
     alias:string,
     serialNumber:string,
-    subject:string,
+    cn:string,
+    ou: string,
+    o:string,
+    c:string,
     issuer:string,
     startDate:Date,
     endDate:Date
-    isCA:boolean,
+    root: boolean,
+    intermediate:boolean,
+    endEntity: boolean,
+    ca:boolean
     revoked:boolean
 }

@@ -4,6 +4,7 @@ import com.example.securityapp.RepositoryInterfaces.CertificateRepositoryInterfa
 import com.example.securityapp.RepositoryInterfaces.UserRepositoryInterface;
 import com.example.securityapp.config.CustomUserDetails;
 import com.example.securityapp.domain.Certificate;
+import com.example.securityapp.domain.KeyStoreMeta;
 import com.example.securityapp.domain.User;
 import com.example.securityapp.dto.CertificateRequestDTO;
 import com.example.securityapp.dto.CertificateResponseDTO;
@@ -19,6 +20,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.LocalDate;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -27,11 +29,13 @@ public class CertificateService {
 
     private final CertificateRepositoryInterface certificateRepository;
     private final UserRepositoryInterface userRepositoryInterface;
+    private final KeyStoreService keyStoreService;
 
     @Autowired
-    public CertificateService(CertificateRepositoryInterface certificateRepository, UserRepositoryInterface userRepositoryInterface) {
+    public CertificateService(CertificateRepositoryInterface certificateRepository, UserRepositoryInterface userRepositoryInterface, KeyStoreService keyStoreService) {
         this.certificateRepository = certificateRepository;
         this.userRepositoryInterface = userRepositoryInterface;
+        this.keyStoreService = keyStoreService;
     }
 
     public CertificateResponseDTO issueCertificate(CertificateRequestDTO request){
@@ -68,11 +72,14 @@ public class CertificateService {
             LocalDate end = start.plusDays(request.durationInDays);
 
             // 5) Subject/Issuer DN (pretpostavka: request.subject i issuer.getSubject() su X500 DN stringovi, npr "CN=John, O=Org, C=RS")
-            String subjectDn = request.subject;
+            String subjectDn = "CN=" + request.cn +
+                    ", O=" + request.o +
+                    (request.ou != null && !request.ou.isBlank() ? ", OU=" + request.ou : "") +
+                    ", C=" + request.c;
 
             // 6) Issuer PrivateKey (decode iz Base64 PKCS#8)
             PrivateKey issuerPrivateKey = subjectKeyPair.getPrivate();
-            String issuerDn = subjectDn;
+            String issuerDn =subjectDn;
 
 
             // 7) Generiši X.509
@@ -86,6 +93,9 @@ public class CertificateService {
                         end,
                         subjectKeyPair,
                         issuerPrivateKey,
+                        request.isRoot,
+                        request.isIntermediate,
+                        request.isEndEntity,
                         request.isCA,
                         request.extensions
                 );
@@ -93,30 +103,36 @@ public class CertificateService {
                 throw new RuntimeException("Failed to generate certificate: " + e.getMessage(), e);
             }
 
+            Map<String,String> values = CertificateGenerator.parseDN(subjectDn);
+
             // 8) Upis u entitet
             Certificate certificate = new Certificate();
             certificate.setAlias("cert-" + System.currentTimeMillis());
             certificate.setSerialNumber(serialHex);
-            certificate.setSubject(subjectDn);
+            certificate.setCn(values.get("CN"));
+            certificate.setO(values.get("O"));
+            certificate.setOu(values.get("OU"));
+            certificate.setC(values.get("C"));
             certificate.setIssuer(issuerDn);
             certificate.setStartDate(start);
             certificate.setEndDate(end);
+            certificate.setRoot(request.isRoot);
+            certificate.setIntermediate(request.isIntermediate);
+            certificate.setEndEntity(request.isEndEntity);
             certificate.setCA(request.isCA);
             certificate.setRevoked(false);
             certificate.setExtensions(String.valueOf(request.extensions)); // možeš JSON stringify ako želiš
 
-            // Sačuvaj ključeve (Base64 DER)
-            String pubKeyB64 = Base64.getEncoder().encodeToString(subjectKeyPair.getPublic().getEncoded());
-            String privKeyB64 = Base64.getEncoder().encodeToString(subjectKeyPair.getPrivate().getEncoded());
-            certificate.setPublicKey(pubKeyB64);
-            certificate.setPrivateKey(privKeyB64);
+            // 1. Spremi u keystore
+            KeyStoreMeta meta = keyStoreService.createAndStoreKeyStore(
+                    new X509Certificate[]{x509},
+                    subjectKeyPair.getPrivate(),
+                    "cert-" + serialHex,
+                    userId
+            );
 
-            // Sačuvaj ceo X.509 (DER u Base64)
-            try {
-                certificate.setEncodedCertificate(Base64.getEncoder().encodeToString(x509.getEncoded()));
-            } catch (Exception ex) {
-                throw new RuntimeException("Failed to encode X.509: " + ex.getMessage(), ex);
-            }
+// 2. Certificate entitet čuva samo referencu
+            certificate.setKeyStoreMetaId(meta.getId());
 
             Certificate saved = certificateRepository.save(certificate);
 
@@ -124,16 +140,23 @@ public class CertificateService {
                     saved.getId(),
                     saved.getAlias(),
                     saved.getSerialNumber(),
-                    saved.getSubject(),
+                    saved.getCn(),
+                    saved.getO(),
+                    saved.getOu(),
+                    saved.getC(),
                     saved.getIssuer(),
                     saved.getStartDate(),
                     saved.getEndDate(),
+                    saved.isRoot(),
+                    saved.isIntermediate(),
+                    saved.isEndEntity(),
                     saved.isCA(),
                     saved.isRevoked()
             );
         }
 
 
+        /// KREIRANJE SERTIFIKATA AKO ISSUER POSTOJI STAVLJANJE U LANAC ISPOD ROOT SERTIFIKATA
         Certificate issuer = certificateRepository.findById(request.issuerId).orElseThrow(() -> new RuntimeException("Issuer not found"));
 
         if (issuer.isRevoked()) {
@@ -142,7 +165,7 @@ public class CertificateService {
         if (issuer.getEndDate() != null && issuer.getEndDate().isBefore(LocalDate.now())) {
             throw new RuntimeException("Issuer certificate is expired.");
         }
-        if (!issuer.isCA()) {
+        if (!issuer.isIntermediate()) {
             throw new RuntimeException("Issuer is not a CA; cannot issue new certificates.");
         }
 
@@ -157,12 +180,22 @@ public class CertificateService {
         LocalDate end = start.plusDays(request.durationInDays);
 
         // 5) Subject/Issuer DN (pretpostavka: request.subject i issuer.getSubject() su X500 DN stringovi, npr "CN=John, O=Org, C=RS")
-        String subjectDn = request.subject;
-        String issuerDn = issuer.getSubject();
+        String subjectDn = "CN=" + request.cn+
+                ", O=" + request.o +
+                (request.ou != null ? ", OU=" + request.ou : "") +
+                ", C=" + request.c;
+        String issuerDn = "CN=" + issuer.getCn() +
+                ", O=" + issuer.getO() +
+                (issuer.getOu() != null ? ", OU=" + issuer.getOu() : "") +
+                ", C=" + issuer.getC();
+
 
         // 6) Issuer PrivateKey (decode iz Base64 PKCS#8)
-        PrivateKey issuerPrivateKey = decodePrivateKeyFromBase64(issuer.getPrivateKey());
-
+        KeyStoreMeta issuerMeta = keyStoreService.getMetaById(issuer.getKeyStoreMetaId());
+        PrivateKey issuerPrivateKey = keyStoreService.loadPrivateKey(
+                issuerMeta,
+                issuer.getAlias()
+        );
         X509Certificate x509;
         try {
             x509 = CertificateGenerator.generateCertificate(
@@ -173,6 +206,9 @@ public class CertificateService {
                     end,
                     subjectKeyPair,
                     issuerPrivateKey,
+                    request.isRoot,
+                    request.isIntermediate,
+                    request.isEndEntity,
                     request.isCA,
                     request.extensions
             );
@@ -184,26 +220,29 @@ public class CertificateService {
         Certificate certificate = new Certificate();
         certificate.setAlias("cert-" + System.currentTimeMillis());
         certificate.setSerialNumber(serialHex);
-        certificate.setSubject(subjectDn);
+        certificate.setCn(request.cn);
+        certificate.setO(request.o);
+        certificate.setOu(request.ou);
+        certificate.setC(request.c);
         certificate.setIssuer(issuerDn);
         certificate.setStartDate(start);
         certificate.setEndDate(end);
-        certificate.setCA(request.isCA);
+        certificate.setRoot(request.isRoot);
+        certificate.setIntermediate(request.isIntermediate);
+        certificate.setEndEntity(request.isEndEntity);
         certificate.setRevoked(false);
         certificate.setExtensions(String.valueOf(request.extensions)); // možeš JSON stringify ako želiš
 
-        // Sačuvaj ključeve (Base64 DER)
-        String pubKeyB64 = Base64.getEncoder().encodeToString(subjectKeyPair.getPublic().getEncoded());
-        String privKeyB64 = Base64.getEncoder().encodeToString(subjectKeyPair.getPrivate().getEncoded());
-        certificate.setPublicKey(pubKeyB64);
-        certificate.setPrivateKey(privKeyB64);
+        // 1. Spremi u keystore (subject cert i private key)
+        KeyStoreMeta meta = keyStoreService.createAndStoreKeyStore(
+                new X509Certificate[]{x509},
+                subjectKeyPair.getPrivate(),
+                "cert-" + serialHex,
+                userId
+        );
 
-        // Sačuvaj ceo X.509 (DER u Base64)
-        try {
-            certificate.setEncodedCertificate(Base64.getEncoder().encodeToString(x509.getEncoded()));
-        } catch (Exception ex) {
-            throw new RuntimeException("Failed to encode X.509: " + ex.getMessage(), ex);
-        }
+// 2. Certificate entitet čuva samo referencu
+        certificate.setKeyStoreMetaId(meta.getId());
 
         Certificate saved = certificateRepository.save(certificate);
 
@@ -211,10 +250,16 @@ public class CertificateService {
                 saved.getId(),
                 saved.getAlias(),
                 saved.getSerialNumber(),
-                saved.getSubject(),
+                saved.getCn(),
+                saved.getO(),
+                saved.getOu(),
+                saved.getC(),
                 saved.getIssuer(),
                 saved.getStartDate(),
                 saved.getEndDate(),
+                saved.isRoot(),
+                saved.isIntermediate(),
+                saved.isEndEntity(),
                 saved.isCA(),
                 saved.isRevoked()
         );
@@ -226,10 +271,16 @@ public class CertificateService {
                 c.getId(),
                 c.getAlias(),
                 c.getSerialNumber(),
-                c.getSubject(),
+                c.getCn(),
+                c.getO(),
+                c.getOu(),
+                c.getC(),
                 c.getIssuer(),
                 c.getStartDate(),
                 c.getEndDate(),
+                c.isRoot(),
+                c.isIntermediate(),
+                c.isEndEntity(),
                 c.isCA(),
                 c.isRevoked()
         )).collect(Collectors.toList());
@@ -241,10 +292,16 @@ public class CertificateService {
                 c.getId(),
                 c.getAlias(),
                 c.getSerialNumber(),
-                c.getSubject(),
+                c.getCn(),
+                c.getO(),
+                c.getOu(),
+                c.getC(),
                 c.getIssuer(),
                 c.getStartDate(),
                 c.getEndDate(),
+                c.isRoot(),
+                c.isIntermediate(),
+                c.isEndEntity(),
                 c.isCA(),
                 c.isRevoked()
         )).collect(Collectors.toList());

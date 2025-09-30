@@ -8,65 +8,73 @@ import java.time.LocalDate;
 public class Certificate {
 
     @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     private String alias;
     private String serialNumber;
-    private String subject;
+    private String cn;
+    private String o;
+    private String ou;
+    private String c;
     private String issuer;
+
+    private boolean isRoot;
+    private boolean isIntermediate;
+    private boolean isEndEntity;
+    private boolean isCA;
 
     private LocalDate startDate;
     private LocalDate endDate;
 
-    private boolean isCA;
     private boolean revoked;
-
-    @Lob
-    @Column(columnDefinition = "TEXT")
-    private String publicKey;
-    @Lob
-    @Column(columnDefinition = "TEXT")
-    private String privateKey;
 
     // JSON string za ekstenzije (keyUsage, basicConstraints, ...)
     @Lob
     @Column(columnDefinition = "TEXT")
     private String extensions;
-    @Lob
-    @Column(columnDefinition = "TEXT")
-    private String encodedCertificate;
 
-    public Certificate() {}
+    private Integer keyStoreMetaId;
 
-    public Certificate(int id,String alias,String serialNumber,String subject,String issuer, LocalDate startDate,LocalDate endDate, boolean isCA, boolean revoked, String publicKey, String privateKey, String extensions,String encodedCertificate) {
+    public Certificate() {
+    }
+
+    public Certificate(int id, String alias, String serialNumber,String cn,String o,String ou, String c, String issuer,boolean isRoot,boolean isIntermediate,boolean isEndEntity,boolean isCA, LocalDate startDate, LocalDate endDate, boolean revoked, String extensions, Integer keyStoreMetaId) {
         this.id = id;
         this.alias = alias;
         this.serialNumber = serialNumber;
-        this.subject = subject;
+        this.cn = cn;
+        this.o = o;
+        this.ou = ou;
+        this.c = c;
         this.issuer = issuer;
+        this.isRoot=isRoot;
+        this.isIntermediate=isIntermediate;
+        this.isCA= isCA;
+        this.isEndEntity=isEndEntity;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.isCA = isCA;
         this.revoked = revoked;
-        this.publicKey = publicKey;
-        this.privateKey = privateKey;
         this.extensions = extensions;
-        this.encodedCertificate=encodedCertificate;
+        this.keyStoreMetaId = keyStoreMetaId;
     }
 
-    public Certificate(String alias,String serialNumber,String subject,String issuer, LocalDate startDate,LocalDate endDate, boolean isCA, boolean revoked, String publicKey, String privateKey, String extensions,String encodedCertificate){
+    public Certificate(String alias, String serialNumber,String cn,String o,String ou, String c,  String issuer,boolean isRoot,boolean isIntermediate,boolean isEndEntity,boolean isCA, LocalDate startDate, LocalDate endDate, boolean revoked, String extensions, Integer keyStoreMetaId) {
         this.alias = alias;
         this.serialNumber = serialNumber;
-        this.subject = subject;
+        this.cn = cn;
+        this.o = o;
+        this.ou = ou;
+        this.c = c;
         this.issuer = issuer;
+        this.isRoot=isRoot;
+        this.isIntermediate=isIntermediate;
+        this.isEndEntity=isEndEntity;
+        this.isCA=isCA;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.isCA = isCA;
         this.revoked = revoked;
-        this.publicKey = publicKey;
-        this.privateKey = privateKey;
         this.extensions = extensions;
-        this.encodedCertificate=encodedCertificate;
+        this.keyStoreMetaId = keyStoreMetaId;
     }
 
     public void setId(int id) {
@@ -93,12 +101,36 @@ public class Certificate {
         this.serialNumber = serialNumber;
     }
 
-    public String getSubject() {
-        return subject;
+    public String getCn() {
+        return cn;
     }
 
-    public void setSubject(String subject) {
-        this.subject = subject;
+    public void setCn(String cn) {
+        this.cn = cn;
+    }
+
+    public String getO() {
+        return o;
+    }
+
+    public void setO(String o) {
+        this.o = o;
+    }
+
+    public String getOu() {
+        return ou;
+    }
+
+    public void setOu(String ou) {
+        this.ou = ou;
+    }
+
+    public String getC() {
+        return c;
+    }
+
+    public void setC(String c) {
+        this.c = c;
     }
 
     public String getIssuer() {
@@ -107,6 +139,38 @@ public class Certificate {
 
     public void setIssuer(String issuer) {
         this.issuer = issuer;
+    }
+
+    public boolean isRoot() {
+        return isRoot;
+    }
+
+    public void setRoot(boolean root) {
+        isRoot = root;
+    }
+
+    public boolean isIntermediate() {
+        return isIntermediate;
+    }
+
+    public void setIntermediate(boolean isIntermediate) {
+        this.isIntermediate = isIntermediate;
+    }
+
+    public boolean isEndEntity() {
+        return isEndEntity;
+    }
+
+    public void setEndEntity(boolean endEntity) {
+        isEndEntity = endEntity;
+    }
+
+    public boolean isCA() {
+        return isCA;
+    }
+
+    public void setCA(boolean CA) {
+        isCA = CA;
     }
 
     public LocalDate getStartDate() {
@@ -125,28 +189,12 @@ public class Certificate {
         this.endDate = endDate;
     }
 
-    public boolean isCA() {
-        return isCA;
-    }
-
-    public void setCA(boolean CA) {
-        isCA = CA;
-    }
-
     public boolean isRevoked() {
         return revoked;
     }
 
     public void setRevoked(boolean revoked) {
         this.revoked = revoked;
-    }
-
-    public String getPublicKey() {
-        return publicKey;
-    }
-
-    public void setPublicKey(String publicKey) {
-        this.publicKey = publicKey;
     }
 
     public String getExtensions() {
@@ -157,17 +205,11 @@ public class Certificate {
         this.extensions = extensions;
     }
 
-    public String getPrivateKey() {
-        return privateKey;
+    public Integer getKeyStoreMetaId() {
+        return keyStoreMetaId;
     }
 
-    public void setPrivateKey(String privateKey) {
-        this.privateKey = privateKey;
-    }
-    public String getEncodedCertificate(){
-        return encodedCertificate;
-    }
-    public void setEncodedCertificate(String encodedCertificate){
-        this.encodedCertificate=encodedCertificate;
+    public void setKeyStoreMetaId(Integer keyStoreMetaId) {
+        this.keyStoreMetaId = keyStoreMetaId;
     }
 }

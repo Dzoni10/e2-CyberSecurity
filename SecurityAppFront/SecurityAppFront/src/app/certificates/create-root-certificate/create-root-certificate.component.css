@@ -10,7 +10,7 @@ div {
     display:flex;
     flex-direction: column;
     gap: 1px;
-    height: 350px;
+    height: 500px;
 }
 
 .form-container {
