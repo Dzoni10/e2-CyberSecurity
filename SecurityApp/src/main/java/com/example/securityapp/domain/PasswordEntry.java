@@ -1,6 +1,7 @@
 package com.example.securityapp.domain;
 
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -27,7 +28,8 @@ public class PasswordEntry {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    public PasswordEntry() {}
+    public PasswordEntry() {
+    }
 
     public PasswordEntry(Integer ownerId, String siteName, String username, String encryptedPassword) {
         this.ownerId = ownerId;
@@ -38,21 +40,51 @@ public class PasswordEntry {
     }
 
     // Getteri i setteri
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public Integer getOwnerId() { return ownerId; }
-    public void setOwnerId(Integer ownerId) { this.ownerId = ownerId; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getSiteName() { return siteName; }
-    public void setSiteName(String siteName) { this.siteName = siteName; }
+    public Integer getOwnerId() {
+        return ownerId;
+    }
 
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
+    public void setOwnerId(Integer ownerId) {
+        this.ownerId = ownerId;
+    }
 
-    public String getEncryptedPassword() { return encryptedPassword; }
-    public void setEncryptedPassword(String encryptedPassword) { this.encryptedPassword = encryptedPassword; }
+    public String getSiteName() {
+        return siteName;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public void setSiteName(String siteName) {
+        this.siteName = siteName;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getEncryptedPassword() {
+        return encryptedPassword;
+    }
+
+    public void setEncryptedPassword(String encryptedPassword) {
+        this.encryptedPassword = encryptedPassword;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }
