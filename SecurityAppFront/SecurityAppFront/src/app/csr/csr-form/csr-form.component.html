@@ -23,8 +23,9 @@
       <label for="selectedCaId">Select CA</label>
       <select formControlName="selectedCaId" id="selectedCaId">
         <option *ngFor="let ca of caList" [value]="ca.id">
-          {{ ca.subject }}
-        </option>
+             {{ ca.issuer }}
+          <!-- OVO SAM TI MENJAO BILO JE  ca.subject, ali posto je mili menjao model moralo se i ovo mejati  -->
+       </option>
       </select>
     </div>
 

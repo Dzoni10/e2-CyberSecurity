@@ -23,6 +23,11 @@ export interface SharePasswordRequest {
   encryptedPasswordForUser: string;
 }
 
+export interface UserWithKey {
+  userId: number;
+  commonName: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -60,4 +65,9 @@ export class PasswordManagerService {
     const headers = this.authService.getAuthHeaders();
     return this.http.post<void>(`${this.apiUrl}/share`, request, { headers });
   }
+
+  getUsersWithKeys(): Observable<UserWithKey[]> {
+  const headers = this.authService.getAuthHeaders();
+  return this.http.get<UserWithKey[]>(`${this.apiUrl}/users-with-keys`, { headers });
+}
 }

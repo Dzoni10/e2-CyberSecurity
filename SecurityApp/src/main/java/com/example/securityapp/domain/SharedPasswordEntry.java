@@ -2,6 +2,8 @@ package com.example.securityapp.domain;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "shared_password_entry")
 public class SharedPasswordEntry {
@@ -16,6 +18,8 @@ public class SharedPasswordEntry {
     @Column(nullable = false)
     private Integer sharedWithUserId;
 
+    @Column(nullable = false)
+    private LocalDateTime sharedAt;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String encryptedPassword;
@@ -26,6 +30,7 @@ public class SharedPasswordEntry {
         this.passwordEntryId = passwordEntryId;
         this.sharedWithUserId = sharedWithUserId;
         this.encryptedPassword = encryptedPassword;
+        this.sharedAt = LocalDateTime.now();
     }
 
     // Getteri i setteri
@@ -40,4 +45,8 @@ public class SharedPasswordEntry {
 
     public String getEncryptedPassword() { return encryptedPassword; }
     public void setEncryptedPassword(String encryptedPassword) { this.encryptedPassword = encryptedPassword; }
+
+    public LocalDateTime getSharedAt() { return sharedAt; }
+    public void setSharedAt(LocalDateTime sharedAt) { this.sharedAt = sharedAt; }
+
 }

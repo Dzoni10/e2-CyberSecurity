@@ -26,6 +26,11 @@ export class PasswordManagerComponent implements OnInit {
 
   decryptedPasswords: { [key: number]: string } = {};
 
+  showShareDialog: { [key: number]: boolean } = {};
+usersWithKeys: any[] = [];
+shareForm!: FormGroup;
+selectedPasswordForSharing: PasswordEntry | null = null;
+
   constructor(
     private fb: FormBuilder,
     private passwordService: PasswordManagerService,
@@ -36,7 +41,10 @@ export class PasswordManagerComponent implements OnInit {
     this.initForms();
     this.loadUserPublicKey();
     this.loadPasswords();
+    this.loadUsersWithKeys();
+
   }
+ 
 
   initForms() {
     this.passwordForm = this.fb.group({
@@ -49,6 +57,10 @@ export class PasswordManagerComponent implements OnInit {
       privateKeyFile: [null],
       privateKeyText: ['']
     });
+
+    this.shareForm = this.fb.group({
+  targetUserId: ['', Validators.required]
+});
   }
 
   loadUserPublicKey() {
@@ -190,4 +202,81 @@ export class PasswordManagerComponent implements OnInit {
       this.error = 'Failed to copy to clipboard';
     });
   }
+
+
+  loadUsersWithKeys() {
+  this.passwordService.getUsersWithKeys().subscribe({
+    next: (users) => {
+      this.usersWithKeys = users;
+    },
+    error: (err) => {
+      console.error('Failed to load users:', err);
+    }
+  });
+}
+
+toggleShareDialog(passwordId: number) {
+  this.showShareDialog[passwordId] = !this.showShareDialog[passwordId];
+}
+
+async sharePassword(password: PasswordEntry) {
+  if (!this.userPrivateKey) {
+    this.error = 'Private key not loaded. Please load your private key first.';
+    return;
+  }
+
+  const targetUserId = this.shareForm.get('targetUserId')?.value;
+  if (!targetUserId) {
+    this.error = 'Please select a user to share with';
+    return;
+  }
+
+  try {
+    this.loading = true;
+
+    // 1. Dešifruj lozinku svojim privatnim ključem
+    const decryptedPassword = await this.cryptoService.decryptPassword(
+      password.encryptedPassword, 
+      this.userPrivateKey
+    );
+
+    // 2. Preuzmi javni ključ korisnika sa kojim deliš
+    const response = await this.passwordService.getUserPublicKey(targetUserId).toPromise();
+    if (!response) {
+      throw new Error('Failed to get target user public key');
+    }
+    
+    const targetPublicKey = await this.cryptoService.importPublicKey(response.publicKey);
+
+    // 3. Enkriptuj lozinku javnim ključem drugog korisnika
+    const encryptedForTarget = await this.cryptoService.encryptPassword(
+      decryptedPassword, 
+      targetPublicKey
+    );
+
+    // 4. Pošalji na backend
+    const shareRequest = {
+      passwordEntryId: password.id,
+      shareWithUserId: targetUserId,
+      encryptedPasswordForUser: encryptedForTarget
+    };
+
+    this.passwordService.sharePassword(shareRequest).subscribe({
+      next: () => {
+        this.message = 'Password shared successfully!';
+        this.showShareDialog[password.id] = false;
+        this.shareForm.reset();
+        this.loading = false;
+      },
+      error: (err) => {
+        this.error = 'Failed to share password: ' + (err.error?.message || 'Unknown error');
+        this.loading = false;
+      }
+    });
+
+  } catch (error) {
+    this.error = 'Failed to share password: ' + error;
+    this.loading = false;
+  }
+}
 }

@@ -60,4 +60,10 @@ public class PasswordManagerController {
         String publicKey = passwordManagerService.getUserPublicKey(userId);
         return ResponseEntity.ok(Map.of("publicKey", publicKey));
     }
+    @GetMapping("/users-with-keys")
+    @PreAuthorize("hasRole('BASIC')")
+    public ResponseEntity<List<Map<String, Object>>> getUsersWithKeys() {
+        List<Map<String, Object>> users = passwordManagerService.getUsersWithPublicKeys();
+        return ResponseEntity.ok(users);
+    }
 }

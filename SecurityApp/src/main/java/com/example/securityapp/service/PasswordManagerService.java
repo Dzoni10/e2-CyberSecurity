@@ -15,7 +15,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -184,5 +186,36 @@ public class PasswordManagerService {
                 entry.getEncryptedPassword(),
                 entry.getCreatedAt()
         );
+    }
+
+    public List<Map<String, Object>> getUsersWithPublicKeys() {
+        Integer currentUserId = getCurrentUserId();
+
+        return csrRepository.findAll().stream()
+                .filter(csr -> csr.getPublicKey() != null && csr.getUploadedByUserId() != null)
+                .filter(csr -> !csr.getUploadedByUserId().equals(currentUserId))
+                .map(csr -> {
+                    Map<String, Object> user = new HashMap<>();
+                    user.put("userId", csr.getUploadedByUserId());
+                    String cn = extractCommonName(csr.getSubject());
+                    user.put("commonName", cn != null ? cn : "User " + csr.getUploadedByUserId());
+                    return user;
+                })
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    private String extractCommonName(String subject) {
+        if (subject == null) return null;
+
+        // Traži CN= u subject stringu
+        String[] parts = subject.split(",");
+        for (String part : parts) {
+            String trimmed = part.trim();
+            if (trimmed.startsWith("CN=")) {
+                return trimmed.substring(3); // ukloni "CN="
+            }
+        }
+        return null;
     }
 }
