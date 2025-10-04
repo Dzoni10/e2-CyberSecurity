@@ -14,28 +14,32 @@ public class VerificationToken {
 
     private String token;
 
-    @OneToOne
+    @ManyToOne
+    @JoinColumn(name="user_id",nullable = false)
     private User user;
 
     private LocalDateTime expiryDate;
     private boolean used;
+    private Purpose purpose;
 
 
     public VerificationToken() {}
 
-    public VerificationToken(String token, User user, LocalDateTime expiryDate, boolean used) {
+    public VerificationToken(String token, User user, LocalDateTime expiryDate, boolean used,Purpose purpose) {
         this.token = token;
         this.user = user;
         this.expiryDate = expiryDate;
         this.used = used;
+        this.purpose = purpose;
     }
 
-    public VerificationToken(int id,String token, User user, LocalDateTime expiryDate, boolean used) {
+    public VerificationToken(int id,String token, User user, LocalDateTime expiryDate, boolean used,Purpose purpose) {
         this.id = id;
         this.token = token;
         this.user = user;
         this.expiryDate = expiryDate;
         this.used = used;
+        this.purpose = purpose;
     }
 
     public int getId() {
@@ -76,5 +80,13 @@ public class VerificationToken {
 
     public void setUsed(boolean used) {
         this.used = used;
+    }
+
+    public Purpose getPurpose() {
+        return purpose;
+    }
+
+    public void setPurpose(Purpose purpose) {
+        this.purpose = purpose;
     }
 }

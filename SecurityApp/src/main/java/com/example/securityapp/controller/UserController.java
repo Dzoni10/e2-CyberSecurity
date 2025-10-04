@@ -5,6 +5,7 @@ import com.example.securityapp.auth.AuthenticationResponse;
 import com.example.securityapp.auth.JwtUtil;
 import com.example.securityapp.auth.SessionInfo;
 import com.example.securityapp.auth.SessionRegistry;
+import com.example.securityapp.domain.Purpose;
 import com.example.securityapp.domain.Role;
 import com.example.securityapp.domain.User;
 import com.example.securityapp.domain.VerificationToken;
@@ -81,6 +82,7 @@ public class UserController {
             verificationToken.setUser(savedUser);
             verificationToken.setExpiryDate(LocalDateTime.now().plusHours(24));
             verificationToken.setUsed(false);
+            verificationToken.setPurpose(Purpose.VERIFICATION);
 
             verificationTokenService.save(verificationToken);
 
@@ -111,23 +113,51 @@ public class UserController {
 
         User user = verificationToken.getUser();
 
-    if(user!=null){
-        if (user.isVerified()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User already verified");
+        if(user == null){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not found");
         }
 
-        if(verificationToken.getExpiryDate().compareTo(LocalDateTime.now()) < 0){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Link expired");
+        Purpose purpose = verificationToken.getPurpose();
+
+        if(purpose==null)
+        {
+            purpose=Purpose.VERIFICATION;
         }
 
-        user.setVerified(true);
-        userService.save(user);
+        switch (purpose)
+        {
+            case VERIFICATION:
+                if (user.isVerified()) {
+                    // opciono: obeleži token kao iskorišćen da se više ne može koristiti
+                    verificationToken.setUsed(true);
+                    verificationTokenService.save(verificationToken);
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User already verified");
+                }
 
-        verificationToken.setUsed(true);
-        verificationTokenService.save(verificationToken);
-        return new ResponseEntity<>("Success verification user found",HttpStatus.OK);
-    }
-     return new ResponseEntity<>("Unsuccessful verification user is null",HttpStatus.NOT_FOUND);
+                // verifikuj nalog
+                user.setVerified(true);
+                userService.save(user);
+
+                // obeleži token kao iskorišćen
+                verificationToken.setUsed(true);
+                verificationTokenService.save(verificationToken);
+
+                return ResponseEntity.ok("Account successfully verified");
+
+            case RESET:
+                if (!user.isVerified()) {
+                    user.setVerified(true);
+                    userService.save(user);
+                }
+
+                verificationToken.setUsed(true);
+                verificationTokenService.save(verificationToken);
+
+                return ResponseEntity.ok("Password reset confirmed");
+
+                default:
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid token purpose");
+        }
     }
 
     @PostMapping(value="/login")
@@ -194,6 +224,7 @@ public class UserController {
             verificationToken.setUser(user);
             verificationToken.setExpiryDate(LocalDateTime.now().plusHours(24));
             verificationToken.setUsed(false);
+            verificationToken.setPurpose(Purpose.RESET);
 
             verificationTokenService.save(verificationToken);
 
