@@ -17,11 +17,13 @@ public class Certificate {
     private String ou;
     private String c;
     private String issuer;
+    private Integer issuerId;
 
     private boolean isRoot;
     private boolean isIntermediate;
     private boolean isEndEntity;
     private boolean isCA;
+
 
     private LocalDate startDate;
     private LocalDate endDate;
@@ -38,7 +40,7 @@ public class Certificate {
     public Certificate() {
     }
 
-    public Certificate(int id, String alias, String serialNumber,String cn,String o,String ou, String c, String issuer,boolean isRoot,boolean isIntermediate,boolean isEndEntity,boolean isCA, LocalDate startDate, LocalDate endDate, boolean revoked, String extensions, Integer keyStoreMetaId) {
+    public Certificate(int id, String alias, String serialNumber,String cn,String o,String ou, String c, String issuer,Integer issuerId,boolean isRoot,boolean isIntermediate,boolean isEndEntity,boolean isCA, LocalDate startDate, LocalDate endDate, boolean revoked, String extensions, Integer keyStoreMetaId) {
         this.id = id;
         this.alias = alias;
         this.serialNumber = serialNumber;
@@ -47,6 +49,7 @@ public class Certificate {
         this.ou = ou;
         this.c = c;
         this.issuer = issuer;
+        this.issuerId = issuerId;
         this.isRoot=isRoot;
         this.isIntermediate=isIntermediate;
         this.isCA= isCA;
@@ -58,7 +61,7 @@ public class Certificate {
         this.keyStoreMetaId = keyStoreMetaId;
     }
 
-    public Certificate(String alias, String serialNumber,String cn,String o,String ou, String c,  String issuer,boolean isRoot,boolean isIntermediate,boolean isEndEntity,boolean isCA, LocalDate startDate, LocalDate endDate, boolean revoked, String extensions, Integer keyStoreMetaId) {
+    public Certificate(String alias, String serialNumber,String cn,String o,String ou, String c,  String issuer,Integer issuerId,boolean isRoot,boolean isIntermediate,boolean isEndEntity,boolean isCA, LocalDate startDate, LocalDate endDate, boolean revoked, String extensions, Integer keyStoreMetaId) {
         this.alias = alias;
         this.serialNumber = serialNumber;
         this.cn = cn;
@@ -66,6 +69,7 @@ public class Certificate {
         this.ou = ou;
         this.c = c;
         this.issuer = issuer;
+        this.issuerId = issuerId;
         this.isRoot=isRoot;
         this.isIntermediate=isIntermediate;
         this.isEndEntity=isEndEntity;
@@ -139,6 +143,14 @@ public class Certificate {
 
     public void setIssuer(String issuer) {
         this.issuer = issuer;
+    }
+
+    public Integer getIssuerId() {
+        return issuerId;
+    }
+
+    public void setIssuerId(Integer issuerId) {
+        this.issuerId = issuerId;
     }
 
     public boolean isRoot() {
