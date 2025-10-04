@@ -18,10 +18,7 @@ import java.security.*;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.LocalDate;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -149,6 +146,7 @@ public class CertificateService {
                     saved.getIssuer(),
                     saved.getStartDate(),
                     saved.getEndDate(),
+                    saved.getIssuerId(),
                     saved.isRoot(),
                     saved.isIntermediate(),
                     saved.isEndEntity(),
@@ -266,7 +264,33 @@ public class CertificateService {
             throw new RuntimeException("Failed to generate certificate: " + e.getMessage(), e);
         }
 
-        // 8) Upis u entitet
+//        // 8) Upis u entitet
+//        Certificate certificate = new Certificate();
+//        certificate.setAlias(alias);
+//        certificate.setSerialNumber(serialHex);
+//        certificate.setCn(request.cn);
+//        certificate.setO(request.o);
+//        certificate.setOu(request.ou);
+//        certificate.setC(request.c);
+//        certificate.setIssuer(issuerDn);
+//        certificate.setStartDate(start);
+//        certificate.setEndDate(end);
+//        certificate.setRoot(request.isRoot);
+//        certificate.setIntermediate(request.isIntermediate);
+//        certificate.setEndEntity(request.isEndEntity);
+//        certificate.setCA(request.isCA);
+//        certificate.setRevoked(false);
+//        certificate.setExtensions(String.valueOf(request.extensions)); // možeš JSON stringify ako želiš
+
+//        // 1. Cuvanje u keystore (subject cert i private key)
+//        KeyStoreMeta meta = keyStoreService.createAndStoreKeyStore(
+//                new X509Certificate[]{x509},
+//                subjectKeyPair.getPrivate(),
+//                alias,
+//                userId
+//        );
+
+// KORISTI (novi kod sa chain-om):
         Certificate certificate = new Certificate();
         certificate.setAlias(alias);
         certificate.setSerialNumber(serialHex);
@@ -282,11 +306,15 @@ public class CertificateService {
         certificate.setEndEntity(request.isEndEntity);
         certificate.setCA(request.isCA);
         certificate.setRevoked(false);
-        certificate.setExtensions(String.valueOf(request.extensions)); // možeš JSON stringify ako želiš
+        certificate.setExtensions(String.valueOf(request.extensions));
+        certificate.setIssuerId(issuer.getId()); // DODATO: čuvaj issuer ID!
 
-        // 1. Cuvanje u keystore (subject cert i private key)
+        // Gradi kompletan chain
+        List<X509Certificate> chainList = buildCertificateChain(certificate, x509);
+
+        // Sačuvaj sa chain-om
         KeyStoreMeta meta = keyStoreService.createAndStoreKeyStore(
-                new X509Certificate[]{x509},
+                chainList.toArray(new X509Certificate[0]),
                 subjectKeyPair.getPrivate(),
                 alias,
                 userId
@@ -308,6 +336,7 @@ public class CertificateService {
                 saved.getIssuer(),
                 saved.getStartDate(),
                 saved.getEndDate(),
+                saved.getIssuerId(),
                 saved.isRoot(),
                 saved.isIntermediate(),
                 saved.isEndEntity(),
@@ -329,6 +358,7 @@ public class CertificateService {
                 c.getIssuer(),
                 c.getStartDate(),
                 c.getEndDate(),
+                c.getIssuerId(),
                 c.isRoot(),
                 c.isIntermediate(),
                 c.isEndEntity(),
@@ -350,6 +380,7 @@ public class CertificateService {
                 c.getIssuer(),
                 c.getStartDate(),
                 c.getEndDate(),
+                c.getIssuerId(),
                 c.isRoot(),
                 c.isIntermediate(),
                 c.isEndEntity(),
@@ -401,12 +432,97 @@ public class CertificateService {
                 c.getIssuer(),
                 c.getStartDate(),
                 c.getEndDate(),
+                c.getIssuerId(),
                 c.isRoot(),
                 c.isIntermediate(),
                 c.isEndEntity(),
                 c.isCA(),
                 c.isRevoked()
         );
+    }
+
+    private List<X509Certificate> buildCertificateChain(Certificate subject, X509Certificate subjectX509) {
+        List<X509Certificate> chain = new ArrayList<>();
+        chain.add(subjectX509); // Subject cert ide prvi
+
+        Certificate currentIssuer = null;
+        if (subject.getIssuerId() != null) {
+            currentIssuer = certificateRepository.findById(subject.getIssuerId()).orElse(null);
+        }
+
+        // Kreni od issuer-a i idi do root-a
+        while (currentIssuer != null) {
+            try {
+                KeyStoreMeta issuerMeta = keyStoreService.getMetaById(currentIssuer.getKeyStoreMetaId());
+                X509Certificate issuerX509 = keyStoreService.loadCertificate(issuerMeta, currentIssuer.getAlias());
+                chain.add(issuerX509);
+
+                // Ako je root, zaustavi se
+                if (currentIssuer.isRoot()) {
+                    break;
+                }
+
+                // Nastavi sa sledećim issuer-om
+                if (currentIssuer.getIssuerId() != null) {
+                    currentIssuer = certificateRepository.findById(currentIssuer.getIssuerId()).orElse(null);
+                } else {
+                    break;
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to build certificate chain: " + e.getMessage(), e);
+            }
+        }
+
+        return chain;
+    }
+
+    public void verifyCertificateChain(int certificateId) {
+        Certificate cert = certificateRepository.findById(certificateId)
+                .orElseThrow(() -> new RuntimeException("Certificate not found"));
+
+        KeyStoreMeta meta = keyStoreService.getMetaById(cert.getKeyStoreMetaId());
+        KeyStore ks = keyStoreService.loadKeyStore(meta);
+
+        try {
+            // Učitaj chain iz keystore-a
+            java.security.cert.Certificate[] chain = ks.getCertificateChain(cert.getAlias());
+
+            if (chain == null || chain.length == 0) {
+                System.out.println("No certificate chain found for: " + cert.getAlias());
+                return;
+            }
+
+            System.out.println("Certificate chain for: " + cert.getCn());
+            System.out.println("Chain length: " + chain.length);
+
+            for (int i = 0; i < chain.length; i++) {
+                X509Certificate x509 = (X509Certificate) chain[i];
+                System.out.println((i+1) + ". Subject: " + x509.getSubjectX500Principal());
+                System.out.println("   Issuer:  " + x509.getIssuerX500Principal());
+
+                // Verifikuj potpis (osim za root koji je self-signed)
+                if (i < chain.length - 1) {
+                    X509Certificate issuerCert = (X509Certificate) chain[i + 1];
+                    try {
+                        x509.verify(issuerCert.getPublicKey());
+                        System.out.println("   ✓ Signature verified by next certificate in chain");
+                    } catch (Exception e) {
+                        System.out.println("   ✗ Signature verification FAILED: " + e.getMessage());
+                    }
+                } else {
+                    // Root cert - verifikuj self-signed
+                    try {
+                        x509.verify(x509.getPublicKey());
+                        System.out.println("   ✓ Self-signed signature verified (root)");
+                    } catch (Exception e) {
+                        System.out.println("   ✗ Self-signed verification FAILED: " + e.getMessage());
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Chain verification failed: " + e.getMessage(), e);
+        }
     }
 
 }

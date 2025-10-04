@@ -42,4 +42,14 @@ public class CertificateController {
         return ResponseEntity.ok(certificateService.getCertificateById(id));
     }
 
+    @GetMapping("/verify/{id}")
+    public ResponseEntity<String> verifyCertificate(@PathVariable int id) {
+        try {
+            certificateService.verifyCertificateChain(id);
+            return ResponseEntity.ok("Certificate chain verification completed. Check server logs.");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Verification failed: " + e.getMessage());
+        }
+    }
+
 }

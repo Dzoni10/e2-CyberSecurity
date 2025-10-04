@@ -18,6 +18,7 @@ public class CertificateResponseDTO {
         private boolean isRoot;
         private boolean isEndEntity;
         private String issuer;
+        private Integer issuerId;
         private LocalDate startDate;
         private LocalDate endDate;
         private boolean isIntermediate;
@@ -26,7 +27,7 @@ public class CertificateResponseDTO {
 
         public CertificateResponseDTO() {}
 
-        public CertificateResponseDTO(int id, String alias,String serialNumber,String cn,String o,String ou, String c,String issuer,LocalDate startDate,LocalDate endDate,boolean isRoot,boolean isIntermediate,boolean isEndEntity,boolean isCA, boolean revoked){
+        public CertificateResponseDTO(int id, String alias,String serialNumber,String cn,String o,String ou, String c,String issuer,LocalDate startDate,LocalDate endDate,Integer issuerId,boolean isRoot,boolean isIntermediate,boolean isEndEntity,boolean isCA, boolean revoked){
             this.id = id;
             this.alias = alias;
             this.serialNumber = serialNumber;
@@ -37,6 +38,7 @@ public class CertificateResponseDTO {
             this.issuer = issuer;
             this.startDate = startDate;
             this.endDate = endDate;
+            this.issuerId = issuerId;
             this.isRoot=isRoot;
             this.isIntermediate = isIntermediate;
             this.isEndEntity=isEndEntity;
@@ -45,7 +47,7 @@ public class CertificateResponseDTO {
 
         }
 
-    public CertificateResponseDTO(String alias,String serialNumber,String cn,String o,String ou, String c,String issuer,LocalDate startDate,LocalDate endDate,boolean isRoot,boolean isIntermediate,boolean isEndEntity,boolean isCA, boolean revoked){
+    public CertificateResponseDTO(String alias,String serialNumber,String cn,String o,String ou, String c,String issuer,LocalDate startDate,LocalDate endDate,Integer issuerId,boolean isRoot,boolean isIntermediate,boolean isEndEntity,boolean isCA, boolean revoked){
         this.alias = alias;
         this.serialNumber = serialNumber;
         this.o = o;
@@ -54,6 +56,7 @@ public class CertificateResponseDTO {
         this.issuer = issuer;
         this.startDate = startDate;
         this.endDate = endDate;
+        this.issuerId = issuerId;
         this.isRoot=isRoot;
         this.isIntermediate = isIntermediate;
         this.isEndEntity=isEndEntity;
@@ -147,6 +150,14 @@ public class CertificateResponseDTO {
 
     public void setIssuer(String issuer) {
         this.issuer = issuer;
+    }
+
+    public Integer getIssuerId() {
+        return issuerId;
+    }
+
+    public void setIssuerId(Integer issuerId) {
+        this.issuerId = issuerId;
     }
 
     public LocalDate getStartDate() {

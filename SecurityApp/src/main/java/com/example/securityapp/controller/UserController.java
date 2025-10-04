@@ -1,14 +1,18 @@
 package com.example.securityapp.controller;
 
+import com.example.securityapp.RepositoryInterfaces.VerificationTokenRepositoryInterface;
 import com.example.securityapp.auth.AuthenticationResponse;
 import com.example.securityapp.auth.JwtUtil;
 import com.example.securityapp.auth.SessionInfo;
 import com.example.securityapp.auth.SessionRegistry;
+import com.example.securityapp.domain.Purpose;
 import com.example.securityapp.domain.Role;
 import com.example.securityapp.domain.User;
+import com.example.securityapp.domain.VerificationToken;
 import com.example.securityapp.dto.LogInRequest;
 import com.example.securityapp.dto.UserDTO;
 import com.example.securityapp.mapper.UserDTOMapper;
+import com.example.securityapp.service.VerificationTokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +23,7 @@ import com.example.securityapp.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -41,6 +46,10 @@ public class UserController {
 
     @Autowired
     private SessionRegistry sessionRegistry;
+
+    @Autowired
+    private VerificationTokenService verificationTokenService;
+    private VerificationTokenRepositoryInterface verificationTokenRepositoryInterface;
 
     @Operation(description = "Create new user", method = "POST")
     @PostMapping(value="/signup")
@@ -67,7 +76,17 @@ public class UserController {
         try {
             userService.save(savedUser);
 
-            String activationLink = "http://localhost:8080/api/users/verify?email=" + savedUser.getEmail();
+            String token = UUID.randomUUID().toString();
+            VerificationToken verificationToken = new VerificationToken();
+            verificationToken.setToken(token);
+            verificationToken.setUser(savedUser);
+            verificationToken.setExpiryDate(LocalDateTime.now().plusHours(24));
+            verificationToken.setUsed(false);
+            verificationToken.setPurpose(Purpose.VERIFICATION);
+
+            verificationTokenService.save(verificationToken);
+
+            String activationLink = "http://localhost:8080/api/users/verify?token=" + token;
             emailService.sendVerificationEmail(userDTO, activationLink);
             return new ResponseEntity<>("User successefully created", HttpStatus.CREATED);
 
@@ -77,15 +96,68 @@ public class UserController {
     }
 
     @GetMapping(value="/verify")
-    public ResponseEntity<String> verifyUser(@RequestParam("email") String email){
-    User user = userService.findByEmail(email);
+    public ResponseEntity<String> verifyUser(@RequestParam("token") String token){
+        VerificationToken verificationToken = verificationTokenService.findByToken(token);
 
-    if(user!=null){
-        user.setVerified(true);
-        userService.save(user);
-        return new ResponseEntity<>("Success verification",HttpStatus.OK);
-    }
-     return new ResponseEntity<>("Unsuccessful verification",HttpStatus.NOT_FOUND);
+        if (verificationToken == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Invalid token");
+        }
+
+        if (verificationToken.isUsed()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token already used");
+        }
+
+        if (verificationToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Token expired");
+        }
+
+        User user = verificationToken.getUser();
+
+        if(user == null){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User not found");
+        }
+
+        Purpose purpose = verificationToken.getPurpose();
+
+        if(purpose==null)
+        {
+            purpose=Purpose.VERIFICATION;
+        }
+
+        switch (purpose)
+        {
+            case VERIFICATION:
+                if (user.isVerified()) {
+                    // opciono: obeleži token kao iskorišćen da se više ne može koristiti
+                    verificationToken.setUsed(true);
+                    verificationTokenService.save(verificationToken);
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("User already verified");
+                }
+
+                // verifikuj nalog
+                user.setVerified(true);
+                userService.save(user);
+
+                // obeleži token kao iskorišćen
+                verificationToken.setUsed(true);
+                verificationTokenService.save(verificationToken);
+
+                return ResponseEntity.ok("Account successfully verified");
+
+            case RESET:
+                if (!user.isVerified()) {
+                    user.setVerified(true);
+                    userService.save(user);
+                }
+
+                verificationToken.setUsed(true);
+                verificationTokenService.save(verificationToken);
+
+                return ResponseEntity.ok("Password reset confirmed");
+
+                default:
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid token purpose");
+        }
     }
 
     @PostMapping(value="/login")
@@ -141,11 +213,22 @@ public class UserController {
         user.setVerified(false);
 
         UserDTO userDTO = userDTOMapper.fromUserToDTO(user);
-        userDTO.email=user.getEmail() ;
+        userDTO.email=user.getEmail();
 
         try {
             userService.save(user);
-            String activationLink = "http://localhost:8080/api/users/verify?email=" + logInRequest.getEmail();
+
+            String token = UUID.randomUUID().toString();
+            VerificationToken verificationToken = new VerificationToken();
+            verificationToken.setToken(token);
+            verificationToken.setUser(user);
+            verificationToken.setExpiryDate(LocalDateTime.now().plusHours(24));
+            verificationToken.setUsed(false);
+            verificationToken.setPurpose(Purpose.RESET);
+
+            verificationTokenService.save(verificationToken);
+
+            String activationLink = "http://localhost:8080/api/users/verify?token=" + token;
             emailService.sendPasswordRecoveryEmail(userDTO, activationLink);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(Map.of("message", "Successfully changed password"));

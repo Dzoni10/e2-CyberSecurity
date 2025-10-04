@@ -1,7 +1,5 @@
 package com.example.securityapp.service;
 
-import com.example.securityapp.domain.Certificate;
-import com.example.securityapp.dto.CertificateRequestDTO;
 import org.bouncycastle.asn1.ASN1ObjectIdentifier;
 import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
