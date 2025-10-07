@@ -2,49 +2,74 @@
   <h2>Upload CSR</h2>
 
   <form [formGroup]="csrForm" (ngSubmit)="submitForm()">
+    
     <!-- CSR File -->
-   <!-- <div  >-->
-   <!--   <label for="csrFile">CSR File (.pem or .csr)</label>  -->
-   <!--   <input type="file" id="csrFile" (change)="onFileChange($event)" required /> -->
-  <!--  </div>-->
-<!-- OVO SAM TI ZAMENI SA 2 DRUGE METODE, TJ SAD SE POSTAVLJA I PRIVATAN KLJUC-->
-    <div>
-      <label for="csrFile">CSR File (.csr)</label>
-      <input type="file" id="csrFile" (change)="onCSRFileChange($event)" required />
+    <div class="form-field">
+      <label for="csrFile">CSR File (.csr, .pem) *</label>
+      <input 
+        type="file" 
+        id="csrFile" 
+        accept=".csr,.pem" 
+        (change)="onCSRFileChange($event)" 
+        #csrFileInput
+      />
+      <span class="file-name">{{ getFileName('csrFile') }}</span>
+      <div class="error-message" *ngIf="hasError('csrFile')">
+        {{ getErrorMessage('csrFile') }}
+      </div>
     </div>
 
-    <div>
-      <label for="privateKeyFile">Private Key File (.pem)</label>
-      <input type="file" id="privateKeyFile" (change)="onPrivateKeyFileChange($event)" required />
+    <!-- Private Key File -->
+    <div class="form-field">
+      <label for="privateKeyFile">Private Key File (.pem, .key) *</label>
+      <input 
+        type="file" 
+        id="privateKeyFile" 
+        accept=".pem,.key" 
+        (change)="onPrivateKeyFileChange($event)"
+        #privateKeyFileInput
+      />
+      <span class="file-name">{{ getFileName('privateKeyFile') }}</span>
+      <div class="error-message" *ngIf="hasError('privateKeyFile')">
+        {{ getErrorMessage('privateKeyFile') }}
+      </div>
     </div>
 
     <!-- Select CA -->
-    <div>
-      <label for="selectedCaId">Select CA</label>
+    <div class="form-field">
+      <label for="selectedCaId">Select CA *</label>
       <select formControlName="selectedCaId" id="selectedCaId">
+        <option [value]="null" disabled selected>Choose a CA...</option>
         <option *ngFor="let ca of caList" [value]="ca.id">
-             {{ ca.issuer }}
-          <!-- OVO SAM TI MENJAO BILO JE  ca.subject, ali posto je mili menjao model moralo se i ovo mejati  -->
-       </option>
+          {{ ca.issuer || ca.cn }}
+        </option>
       </select>
+      <div class="error-message" *ngIf="hasError('selectedCaId')">
+        {{ getErrorMessage('selectedCaId') }}
+      </div>
     </div>
 
-    <!-- Requested duration -->
-    <div>
-      <label for="requestedDurationDays">Requested Duration (days)</label>
+    <!-- Requested Duration -->
+    <div class="form-field">
+      <label for="requestedDurationDays">Requested Duration (days) *</label>
       <input
         type="number"
         id="requestedDurationDays"
         formControlName="requestedDurationDays"
-        required
+        min="1"
+        [max]="maxDuration"
       />
+      <span class="hint">Max: {{ maxDuration }} days (based on selected CA validity)</span>
+      <div class="error-message" *ngIf="hasError('requestedDurationDays')">
+        {{ getErrorMessage('requestedDurationDays') }}
+      </div>
     </div>
 
-    <button type="submit" [disabled]="csrForm.invalid">Submit</button>
+    <button type="submit" [disabled]="csrForm.invalid">Submit CSR</button>
   </form>
 
   <!-- Status -->
-  <div *ngIf="uploadStatus" style="margin-top: 1rem">
+  <div *ngIf="uploadStatus" class="status-message">
     <strong>{{ uploadStatus }}</strong>
   </div>
 </div>

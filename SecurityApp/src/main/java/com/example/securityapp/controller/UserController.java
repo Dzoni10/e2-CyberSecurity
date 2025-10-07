@@ -18,11 +18,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.example.securityapp.service.EmailService;
 import com.example.securityapp.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,6 +33,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/users")
+@Validated
 public class UserController {
 
     @Autowired
@@ -58,7 +61,7 @@ public class UserController {
 
     @Operation(description = "Create new user", method = "POST")
     @PostMapping(value="/signup")
-    public ResponseEntity<?> signup(@RequestBody UserDTO userDTO, HttpServletRequest request) {
+    public ResponseEntity<?> signup(@Valid @RequestBody UserDTO userDTO, HttpServletRequest request) {
         String ipAddress = getClientIpAddress(request);
         String userAgent = request.getHeader("User-Agent");
 
@@ -66,7 +69,7 @@ public class UserController {
             loggerService.logAuthEvent(
                     "SIGNUP_FAILED",
                     userDTO.email,
-                    "NONE", // Korisnik još ne postoji u sistemu
+                    "NONE",
                     "FAILURE",
                     "Email already exists",
                     ipAddress,
@@ -106,7 +109,7 @@ public class UserController {
             loggerService.logAuthEvent(
                     "SIGNUP_SUCCESS",
                     userDTO.email,
-                    savedUser.getRole().toString(), // BASIC
+                    savedUser.getRole().toString(),
                     "SUCCESS",
                     "User created successfully, verification email sent",
                     ipAddress,
@@ -119,7 +122,7 @@ public class UserController {
             loggerService.logAuthEvent(
                     "SIGNUP_ERROR",
                     userDTO.email,
-                    Role.BASIC.toString(), // Planirana uloga
+                    Role.BASIC.toString(),
                     "ERROR",
                     "Failed to send verification email: " + e.getMessage(),
                     ipAddress,
@@ -267,7 +270,7 @@ public class UserController {
     }
 
     @PostMapping(value="/login")
-    public ResponseEntity<?> login(@RequestBody LogInRequest logInRequest, HttpServletRequest request){
+    public ResponseEntity<?> login(@Valid @RequestBody LogInRequest logInRequest, HttpServletRequest request){
         String ipAddress = getClientIpAddress(request);
         String userAgent = request.getHeader("User-Agent");
 
@@ -333,7 +336,7 @@ public class UserController {
     }
 
     @PostMapping(value="/recovery")
-    public ResponseEntity<?> recovery(@RequestBody LogInRequest logInRequest, HttpServletRequest request){
+    public ResponseEntity<?> recovery(@Valid @RequestBody LogInRequest logInRequest, HttpServletRequest request){
         String ipAddress = getClientIpAddress(request);
 
         User user = userService.findByEmail(logInRequest.getEmail());
@@ -405,12 +408,11 @@ public class UserController {
     public ResponseEntity<List<SessionInfo>> getActiveSessions(@RequestParam int userId, HttpServletRequest request) {
         String ipAddress = getClientIpAddress(request);
 
-        // Ovde ne možemo dobiti role iz userId bez dodatnog query-a
         loggerService.logSecurityEvent(
                 "SESSION_LIST_ACCESSED",
                 "SESSION_MANAGEMENT",
                 "User ID: " + userId,
-                "N/A", // Role nije dostupna ovde bez dodatnog upita
+                "N/A",
                 "SUCCESS",
                 "Retrieved active sessions",
                 ipAddress
@@ -429,7 +431,7 @@ public class UserController {
                 "SESSION_REVOKED",
                 "SESSION_MANAGEMENT",
                 "Session ID: " + sessionId,
-                "N/A", // Role nije dostupna ovde
+                "N/A",
                 "SUCCESS",
                 "Session revoked manually",
                 ipAddress
@@ -438,9 +440,6 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    /**
-     * Helper method to extract client IP address
-     */
     private String getClientIpAddress(HttpServletRequest request) {
         String ipAddress = request.getHeader("X-Forwarded-For");
         if (ipAddress == null || ipAddress.isEmpty()) {
