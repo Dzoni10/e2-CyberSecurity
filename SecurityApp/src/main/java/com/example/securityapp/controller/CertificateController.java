@@ -5,16 +5,19 @@ import com.example.securityapp.dto.CertificateResponseDTO;
 import com.example.securityapp.service.CertificateService;
 import com.example.securityapp.service.CustomLoggerService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/certificates")
+@Validated
 public class CertificateController {
 
     @Autowired
@@ -50,7 +53,9 @@ public class CertificateController {
     }
 
     @PostMapping(value="/issue")
-    public CertificateResponseDTO issueCertificate(@RequestBody CertificateRequestDTO request, HttpServletRequest httpRequest){
+    public CertificateResponseDTO issueCertificate(
+            @Valid @RequestBody CertificateRequestDTO request,
+            HttpServletRequest httpRequest){
         String ipAddress = getClientIpAddress(httpRequest);
         String user = getCurrentUser();
         String role = getCurrentUserRole();
@@ -212,9 +217,6 @@ public class CertificateController {
         }
     }
 
-    /**
-     * Helper method to extract client IP address
-     */
     private String getClientIpAddress(HttpServletRequest request) {
         String ipAddress = request.getHeader("X-Forwarded-For");
         if (ipAddress == null || ipAddress.isEmpty()) {
@@ -223,9 +225,6 @@ public class CertificateController {
         return ipAddress;
     }
 
-    /**
-     * Get current authenticated user
-     */
     private String getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
@@ -234,9 +233,6 @@ public class CertificateController {
         return "ANONYMOUS";
     }
 
-    /**
-     * Get current user's role
-     */
     private String getCurrentUserRole() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getAuthorities() != null && !auth.getAuthorities().isEmpty()) {
