@@ -44,35 +44,47 @@
 </div> -->
 
 <form [formGroup]="rootForm" (ngSubmit)="onSubmit()">
-  
-    <div class="form-container" @slideIn>
-      <mat-label>Subject</mat-label>
-        <mat-form-field>
-            <mat-label>Common Name (CN)</mat-label>
-            <input matInput formControlName="cn" type="text" placeholder="Input CN (exp. CN=Admin Root)"/>
-        </mat-form-field> 
-        <mat-form-field>
-            <mat-label>Organization (O)</mat-label>
-            <input matInput formControlName="o" type="text" placeholder="Input organization (exp. O=Organization)"/>
-        </mat-form-field>
-        <mat-form-field>
-            <mat-label>Organization Unit (OU)</mat-label>
-            <input matInput formControlName="ou" type="text" placeholder="Input organization unit (exp. OU=Organization...)"/>
-        </mat-form-field>
-        <mat-form-field>
-            <mat-label>Country (C)</mat-label>
-            <input matInput formControlName="c" type="text" placeholder="Input conutry (exp. C=Serbia)"/>
-        </mat-form-field>
-        <mat-form-field>
-            <mat-label>Duration (in days)</mat-label>
-            <input matInput formControlName="durationInDays" type="number"/>
-        </mat-form-field>
-        <mat-slide-toggle formControlName="isCA" color="primary">
-          is CA certificate?
-        </mat-slide-toggle>
-        
+  <div class="form-container" @slideIn>
+    <mat-label>Subject</mat-label>
+    
+    <mat-form-field>
+      <mat-label>Common Name (CN)</mat-label>
+      <input matInput formControlName="cn" type="text" placeholder="e.g., Root CA" maxlength="64"/>
+      <mat-error *ngIf="hasError('cn')">{{ getErrorMessage('cn') }}</mat-error>
+    </mat-form-field>
 
-    <button class="btnRegister" color="primary" type="submit" mat-raised-button>Create</button>
-    </div>
+    <mat-form-field>
+      <mat-label>Organization (O)</mat-label>
+      <input matInput formControlName="o" type="text" placeholder="e.g., My Company Inc." maxlength="64"/>
+      <mat-error *ngIf="hasError('o')">{{ getErrorMessage('o') }}</mat-error>
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Organization Unit (OU)</mat-label>
+      <input matInput formControlName="ou" type="text" placeholder="e.g., IT Department" maxlength="64"/>
+      <mat-error *ngIf="hasError('ou')">{{ getErrorMessage('ou') }}</mat-error>
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Country (C)</mat-label>
+      <input matInput formControlName="c" type="text" placeholder="e.g., RS" maxlength="2" style="text-transform: uppercase;"/>
+      <mat-error *ngIf="hasError('c')">{{ getErrorMessage('c') }}</mat-error>
+      <mat-hint>2-letter country code (e.g., RS, US, DE)</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Duration (in days)</mat-label>
+      <input matInput formControlName="durationInDays" type="number" min="1" max="7300"/>
+      <mat-error *ngIf="hasError('durationInDays')">{{ getErrorMessage('durationInDays') }}</mat-error>
+      <mat-hint>Maximum: 20 years (7300 days)</mat-hint>
+    </mat-form-field>
+
+    <mat-slide-toggle formControlName="isCA" color="primary">
+      is CA certificate?
+    </mat-slide-toggle>
+
+    <button class="btnRegister" color="primary" type="submit" mat-raised-button [disabled]="rootForm.invalid">
+      Create
+    </button>
+  </div>
 </form>
-

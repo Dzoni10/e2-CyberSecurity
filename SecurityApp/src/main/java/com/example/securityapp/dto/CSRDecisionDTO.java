@@ -1,10 +1,24 @@
 package com.example.securityapp.dto;
 
+import com.example.securityapp.validation.ValidationConstants;
+import jakarta.validation.constraints.*;
+
 public class CSRDecisionDTO {
+
+    @NotNull(message = "CSR ID is required")
+    @Positive(message = "CSR ID must be positive")
     private Long csrId;
+
     private boolean approved;
-    private String rejectionReason; // ako je odbijen
-    private Integer finalDurationDays; // admin može promeniti trajanje
+
+    @Size(max = 500, message = "Rejection reason cannot exceed {max} characters")
+    private String rejectionReason;
+
+    @Min(value = ValidationConstants.MIN_DURATION_DAYS,
+            message = "Duration must be at least {value} day")
+    @Max(value = ValidationConstants.MAX_DURATION_DAYS,
+            message = "Duration cannot exceed {value} days")
+    private Integer finalDurationDays;
 
     public CSRDecisionDTO() {}
 
