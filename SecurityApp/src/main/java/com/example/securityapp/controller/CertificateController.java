@@ -1,22 +1,36 @@
 package com.example.securityapp.controller;
 
+import com.example.securityapp.RepositoryInterfaces.CertificateRepositoryInterface;
 import com.example.securityapp.domain.Certificate;
+import com.example.securityapp.domain.KeyStoreMeta;
 import com.example.securityapp.domain.User;
 import com.example.securityapp.dto.CertificateRequestDTO;
 import com.example.securityapp.dto.CertificateResponseDTO;
 import com.example.securityapp.dto.CertificateRevokeDTO;
 import com.example.securityapp.service.CertificateService;
 import com.example.securityapp.service.CustomLoggerService;
+import com.example.securityapp.service.KeyStoreService;
 import com.example.securityapp.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.cert.X509Certificate;
+import java.util.Base64;
 import java.util.List;
 
 @RestController
@@ -28,10 +42,16 @@ public class CertificateController {
     private CertificateService certificateService;
 
     @Autowired
+    private CertificateRepositoryInterface certificateRepository;
+
+    @Autowired
     private UserService userService;
 
     @Autowired
     private CustomLoggerService loggerService;
+
+    @Autowired
+    private KeyStoreService keyStoreService;
 
     @GetMapping(value="/all")
     public ResponseEntity<List<CertificateResponseDTO>> getAll(HttpServletRequest request) {
@@ -263,6 +283,108 @@ public class CertificateController {
         List<Certificate> certs = certificateService.getEndEntityCertificatesForUser(userId);
         return ResponseEntity.ok(certs);
     }
+
+    @GetMapping("/download/{certificateId}")
+    public ResponseEntity<Resource> downloadCertificate(@PathVariable Integer certificateId) {
+        //
+        Certificate cert = certificateRepository.findById(certificateId)
+                .orElseThrow(() -> new RuntimeException("Certificate not found"));
+
+        KeyStoreMeta meta = keyStoreService.getMetaById(cert.getKeyStoreMetaId());
+
+        Path filePath = Paths.get(meta.getPath());
+        if (!Files.exists(filePath)) {
+            throw new RuntimeException("Keystore file not found: " + filePath);
+        }
+
+        Resource resource = new FileSystemResource(filePath);
+
+        //response
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + cert.getAlias() + ".p12")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(resource);
+    }
+/*
+    @GetMapping("/download-public/{certificateId}")
+    public ResponseEntity<byte[]> downloadPublicCertificate(@PathVariable Integer certificateId) {
+        try {
+            Certificate cert = certificateRepository.findById(certificateId)
+                    .orElseThrow(() -> new RuntimeException("Certificate not found"));
+            KeyStoreMeta meta = keyStoreService.getMetaById(cert.getKeyStoreMetaId());
+            X509Certificate x509 = keyStoreService.loadCertificate(meta, cert.getAlias());
+
+            byte[] encoded = x509.getEncoded();
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + cert.getAlias() + ".cer")
+                    .contentType(MediaType.valueOf("application/x-x509-ca-cert"))
+                    .body(encoded);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to encode certificate: " + e.getMessage(), e);
+        }
+    }*/
+
+    @GetMapping("/download-public/{certificateId}")
+    public ResponseEntity<byte[]> downloadPublicCertificate(
+            @PathVariable Integer certificateId,
+            @RequestParam(defaultValue = "der") String format // "der" ili "pem"
+    ) {
+        try {
+            // 1️⃣ Učitaj sertifikat iz baze i keystore-a
+            Certificate cert = certificateRepository.findById(certificateId)
+                    .orElseThrow(() -> new RuntimeException("Certificate not found"));
+
+            KeyStoreMeta meta = keyStoreService.getMetaById(cert.getKeyStoreMetaId());
+            X509Certificate x509 = keyStoreService.loadCertificate(meta, cert.getAlias());
+
+            byte[] body;
+            String filename;
+            MediaType contentType;
+
+            // 2️⃣ Odredi format
+            if ("pem".equalsIgnoreCase(format)) {
+                // PEM: Base64 + header/footer
+                String pem = "-----BEGIN CERTIFICATE-----\n" +
+                        Base64.getMimeEncoder(64, "\n".getBytes())
+                                .encodeToString(x509.getEncoded()) +
+                        "\n-----END CERTIFICATE-----\n";
+                body = pem.getBytes(StandardCharsets.UTF_8);
+                filename = cert.getAlias() + ".pem";
+                contentType = MediaType.valueOf("application/x-pem-file");
+            } else {
+                // Default DER
+                body = x509.getEncoded();
+                filename = cert.getAlias() + ".cer";
+                contentType = MediaType.valueOf("application/x-x509-ca-cert");
+            }
+
+            // 3️⃣ Vrati response
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+                    .contentType(contentType)
+                    .body(body);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate public certificate file: " + e.getMessage(), e);
+        }
+    }
+
+/*
+    @GetMapping("/keystore-password/{certificateId}")
+    @PreAuthorize("hasRole('BASIC')") // samo vlasnik
+    public ResponseEntity<String> getKeystorePassword(@PathVariable Integer certificateId) {
+        Certificate cert = certificateRepository.findById(certificateId)
+                .orElseThrow(() -> new RuntimeException("Certificate not found"));
+
+        KeyStoreMeta meta = keyStoreService.getMetaById(cert.getKeyStoreMetaId());
+
+        // Dekriptuj lozinku
+        String decryptedPassword = keyStoreService.decryptPassword(meta.getEncryptedPassword());
+
+        return ResponseEntity.ok(decryptedPassword);
+    }*/
 
     private String getClientIpAddress(HttpServletRequest request) {
         String ipAddress = request.getHeader("X-Forwarded-For");

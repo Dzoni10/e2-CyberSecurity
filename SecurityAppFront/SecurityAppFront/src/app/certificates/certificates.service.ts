@@ -68,6 +68,22 @@ getAllTemplatesByIssuer(issuerId: number) {
   return this.http.get<CertificateTemplate[]>(`${this.apiTemplateUrl}/by-issuer/${issuerId}`);
 }
 
+downloadCertificate(id: number): Observable<Blob> {
+  return this.http.get(`${this.apiUrl}/download-public/${id}`, { responseType: 'blob' });
+}
+/*
+downloadCertificate(id: number): void {
+  this.http.get(`${this.apiUrl}/download-public/${id}`, { responseType: 'blob' })
+    .subscribe(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `certificate-${id}.cer`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    });
+}*/
+
 
 //metoda koja dobavlja header jer u svaki zahtev ka serveru mora da se salje token kako bi se validirao korisik koji je ulogovan
 // i kako bi se znalo sta ulogovan sme da koristi od URL-ova
