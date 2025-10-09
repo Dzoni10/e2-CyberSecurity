@@ -50,4 +50,25 @@ certificates: CertificateResponse[]=[];
     }
   });
 }
+
+onDownload(certId: number) {
+  /*
+  this.certifcateService.downloadCertificate(certId).subscribe(blob => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `certificate-${certId}.p12`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  });*/
+  this.certifcateService.downloadCertificate(certId).subscribe(blob => {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `certificate-${certId}.cer`; // ime fajla
+  link.click();
+  window.URL.revokeObjectURL(url);
+});
+}
+
 }

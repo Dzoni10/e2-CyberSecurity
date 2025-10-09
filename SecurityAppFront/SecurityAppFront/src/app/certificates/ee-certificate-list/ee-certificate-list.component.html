@@ -22,6 +22,7 @@
       </mat-card-content>
 
       <mat-card-actions>
+        <button (click)="onDownload(cert.id)">Download</button>
     <button *ngIf="!cert.revoked && !cert.showReasonInput"
             mat-raised-button
             color="primary"
