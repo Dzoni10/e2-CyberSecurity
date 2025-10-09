@@ -26,7 +26,7 @@ public class SecurityAppApplication implements WebMvcConfigurer {
 //        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 //        System.out.println(encoder.matches("admin123", "$2a$10$Dow1E2F6wNwKj5oFzpFsaOeP4nK3pHz5fVQ4qP5B.YA5jE6cBQzvS"));
 //
-//        String hash = encoder.encode("basic123");
+//        String hash = encoder.encode("ca123456");
 //        System.out.println(hash);
     }
 

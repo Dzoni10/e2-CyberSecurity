@@ -24,6 +24,10 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/signup`,registration);
   }
 
+  createCaUser(caUser: Register): Observable<any>{
+    return this.http.post(`${this.apiUrl}/registerCA`,caUser);
+  }
+
    login(email: string, password: string):  Observable<AuthResponse>{
     const body = {email, password};
     return this.http.post<AuthResponse>(`${this.apiUrl}/login`,body)

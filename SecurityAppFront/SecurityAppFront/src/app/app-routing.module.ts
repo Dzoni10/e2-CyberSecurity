@@ -14,6 +14,8 @@ import { CaCertificateListComponent } from './certificates/ca-certificate-list/c
 import { PendingCsrListComponent } from './csr/pending-csr-list/pending-csr-list.component';
 import { EeCertificateListComponent } from './certificates/ee-certificate-list/ee-certificate-list.component';
 import { CreateTemplateComponent } from './certificates/create-template/create-template.component';
+import { CreateCaUserComponent } from './auth/create-ca-user/create-ca-user.component';
+
 const routes: Routes = [
    { path: 'login', component: LoginComponent },
    { path: 'signup', component: SignupComponent},
@@ -28,7 +30,8 @@ const routes: Routes = [
    { path: 'csrForm', component:CsrFormComponent},
    { path: 'create-template', component:CreateTemplateComponent},
    {path: 'create-intermediate',component:CreateIntCertificateComponent},
-   {path: 'create-endEntity', component:CreateEeCertificateComponent}
+   {path: 'create-endEntity', component:CreateEeCertificateComponent},
+   {path: 'create-ca-user', component:CreateCaUserComponent}
   
 ];
 

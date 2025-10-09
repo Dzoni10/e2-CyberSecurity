@@ -61,7 +61,18 @@ public class KeyStoreService {
             }
 
             // 3) encrypt ksPassword with master passphrase
+
+            System.out.println("========== KeyStore DEBUG ==========");
+            System.out.println("Keystore path: " + file.toString());
+            System.out.println("Master passphrase (iz .env): " + masterPassphrase);
+            System.out.println("Keystore password (pre enkripcije): " + ksPassword);
+
+
             String encryptedPassword = CryptoUtils.encryptWithPassword(ksPassword.getBytes("UTF-8"), masterPassphrase.toCharArray());
+
+            System.out.println("Encrypted password (Base64, upisana u bazu): " + encryptedPassword);
+            System.out.println("=====================================");
+
 
             // 4) persist KeyStoreMeta
             KeyStoreMeta meta = new KeyStoreMeta();

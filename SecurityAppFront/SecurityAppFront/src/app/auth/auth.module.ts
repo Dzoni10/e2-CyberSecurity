@@ -8,7 +8,8 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { MatOptionModule } from '@angular/material/core';
 import {MatInputModule} from '@angular/material/input';
 import { PassRecoveryComponent } from './pass-recovery/pass-recovery.component';
-import { SessionManagementComponent } from './session-management/session-management.component'
+import { SessionManagementComponent } from './session-management/session-management.component';
+import { CreateCaUserComponent } from './create-ca-user/create-ca-user.component'
 
 
 @NgModule({
@@ -16,7 +17,8 @@ import { SessionManagementComponent } from './session-management/session-managem
     LoginComponent,
     SignupComponent,
     PassRecoveryComponent,
-    SessionManagementComponent
+    SessionManagementComponent,
+    CreateCaUserComponent
   ],
   imports: [
     CommonModule,

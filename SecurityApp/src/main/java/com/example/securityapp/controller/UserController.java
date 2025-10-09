@@ -29,6 +29,7 @@ import jakarta.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 
 @RestController
@@ -89,6 +90,8 @@ public class UserController {
         String hash = encoder.encode(userDTO.password);
         savedUser.setPassword(hash);
         savedUser.setVerified(false);
+        savedUser.setMustChangePassword(false);
+        savedUser.setFirstLogin(false);
 
         try {
             userService.save(savedUser);
@@ -130,6 +133,94 @@ public class UserController {
             );
             return new ResponseEntity<>("Cannot send verification email",HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+
+    @Operation(description = "Create ca user", method = "POST")
+    @PostMapping(value="/registerCA")
+    public ResponseEntity<?> registerCa(@Valid @RequestBody UserDTO userDTO, HttpServletRequest request) {
+        String ipAddress = getClientIpAddress(request);
+        String userAgent = request.getHeader("User-Agent");
+
+        if(userService.isEmailExist(userDTO.email)) {
+            loggerService.logAuthEvent(
+                    "SIGNUP_FAILED",
+                    userDTO.email,
+                    "NONE",
+                    "FAILURE",
+                    "Email already exists",
+                    ipAddress,
+                    userAgent
+            );
+            return new ResponseEntity<>("Email exits", HttpStatus.BAD_REQUEST);
+        }
+
+        String randomPassword = generateRandomPassword(8);
+
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        String encodedPassword = encoder.encode(randomPassword);
+
+        User savedUser = new User();
+        savedUser.setEmail(userDTO.email);
+        savedUser.setName(userDTO.name);
+        savedUser.setSurname(userDTO.surname);
+        savedUser.setOrganization(userDTO.organization);
+        savedUser.setRole(Role.CA);
+        savedUser.setPassword(encodedPassword);
+        savedUser.setVerified(false);
+        savedUser.setMustChangePassword(false);
+        savedUser.setFirstLogin(true);
+
+        try {
+            userService.save(savedUser);
+
+            String token = UUID.randomUUID().toString();
+            VerificationToken verificationToken = new VerificationToken();
+            verificationToken.setToken(token);
+            verificationToken.setUser(savedUser);
+            verificationToken.setExpiryDate(LocalDateTime.now().plusHours(24));
+            verificationToken.setUsed(false);
+            verificationToken.setPurpose(Purpose.VERIFICATION);
+
+            verificationTokenService.save(verificationToken);
+
+            String activationLink = "http://localhost:8080/api/users/verify?token=" + token;
+            emailService.sendVerificationEmailCA(userDTO,randomPassword, activationLink);
+
+            loggerService.logAuthEvent(
+                    "SIGNUP_SUCCESS",
+                    userDTO.email,
+                    savedUser.getRole().toString(),
+                    "SUCCESS",
+                    "User created successfully, verification email sent",
+                    ipAddress,
+                    userAgent
+            );
+
+            return new ResponseEntity<>("User successefully created", HttpStatus.CREATED);
+
+        } catch (Exception e) {
+            loggerService.logAuthEvent(
+                    "SIGNUP_ERROR",
+                    userDTO.email,
+                    Role.CA.toString(),
+                    "ERROR",
+                    "Failed to send verification email: " + e.getMessage(),
+                    ipAddress,
+                    userAgent
+            );
+            return new ResponseEntity<>("Cannot send verification email",HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private String generateRandomPassword(int length) {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%!";
+        StringBuilder sb = new StringBuilder();
+        Random random = new Random();
+        for (int i = 0; i < length; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 
     @GetMapping(value="/verify")
@@ -217,6 +308,7 @@ public class UserController {
                 }
 
                 user.setVerified(true);
+                user.setMustChangePassword(false);
                 userService.save(user);
 
                 verificationToken.setUsed(true);
@@ -316,6 +408,19 @@ public class UserController {
             return new ResponseEntity<>("Unsuccessful login - mail not verified", HttpStatus.NOT_ACCEPTABLE);
         }
 
+        if (user.isMustChangePassword()) {
+            loggerService.logAuthEvent(
+                    "LOGIN_BLOCKED",
+                    logInRequest.getEmail(),
+                    user.getRole().toString(),
+                    "FAILURE",
+                    "User must change password before login",
+                    ipAddress,
+                    userAgent
+            );
+            return new ResponseEntity<>("You must change your password before logging in again.", HttpStatus.FORBIDDEN);
+        }
+
         String sessionId = UUID.randomUUID().toString();
         String token = jwtUtil.generateToken(user.getId(), user.getRole(), sessionId);
 
@@ -330,6 +435,13 @@ public class UserController {
                 ipAddress,
                 userAgent
         );
+
+        if (user.getRole() == Role.CA && user.isFirstLogin()) {
+            user.setMustChangePassword(true);
+            user.setFirstLogin(false);
+            userService.save(user);
+        }
+
 
         AuthenticationResponse response = new AuthenticationResponse(token);
         return new ResponseEntity<>(response, HttpStatus.OK);
@@ -358,6 +470,11 @@ public class UserController {
         String hash = encoder.encode(logInRequest.getPassword());
         user.setPassword(hash);
         user.setVerified(false);
+
+        if(user.getRole()==Role.CA) {
+            if(user.isMustChangePassword())
+                user.setMustChangePassword(false);
+        }
 
         UserDTO userDTO = userDTOMapper.fromUserToDTO(user);
         userDTO.email=user.getEmail();
