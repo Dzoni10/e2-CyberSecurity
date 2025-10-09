@@ -57,6 +57,7 @@ public class CertificateRequestDTO {
         public boolean isCA;
 
         public Map<String, String> extensions;   // npr. keyUsage, basicConstraints, itd.
+        private String publicKey;
 
         public CertificateRequestDTO() {}
 
@@ -74,5 +75,101 @@ public class CertificateRequestDTO {
                 this.isEndEntity = isEndEntity;
                 this.isCA = isCA;
                 this.extensions = extensions;
+        }
+
+        public String getCn() {
+                return cn;
+        }
+
+        public void setCn(String cn) {
+                this.cn = cn;
+        }
+
+        public String getO() {
+                return o;
+        }
+
+        public void setO(String o) {
+                this.o = o;
+        }
+
+        public String getOu() {
+                return ou;
+        }
+
+        public void setOu(String ou) {
+                this.ou = ou;
+        }
+
+        public String getC() {
+                return c;
+        }
+
+        public void setC(String c) {
+                this.c = c;
+        }
+
+        public Integer getIssuerId() {
+                return issuerId;
+        }
+
+        public void setIssuerId(Integer issuerId) {
+                this.issuerId = issuerId;
+        }
+
+        public int getDurationInDays() {
+                return durationInDays;
+        }
+
+        public void setDurationInDays(int durationInDays) {
+                this.durationInDays = durationInDays;
+        }
+
+        public boolean isRoot() {
+                return isRoot;
+        }
+
+        public void setRoot(boolean root) {
+                isRoot = root;
+        }
+
+        public boolean isIntermediate() {
+                return isIntermediate;
+        }
+
+        public void setIntermediate(boolean intermediate) {
+                isIntermediate = intermediate;
+        }
+
+        public boolean isEndEntity() {
+                return isEndEntity;
+        }
+
+        public void setEndEntity(boolean endEntity) {
+                isEndEntity = endEntity;
+        }
+
+        public boolean isCA() {
+                return isCA;
+        }
+
+        public void setCA(boolean CA) {
+                isCA = CA;
+        }
+
+        public Map<String, String> getExtensions() {
+                return extensions;
+        }
+
+        public void setExtensions(Map<String, String> extensions) {
+                this.extensions = extensions;
+        }
+
+        public String getPublicKey() {
+                return publicKey;
+        }
+
+        public void setPublicKey(String publicKey) {
+                this.publicKey = publicKey;
         }
 }

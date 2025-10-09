@@ -1,0 +1,44 @@
+<div class="csr-container">
+  <h2>Pending CSR Requests</h2>
+
+  <div *ngIf="loading">Loading...</div>
+  <div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
+  <div *ngIf="!loading && csrs.length === 0">No pending CSR requests.</div>
+
+  <div *ngFor="let csr of csrs" class="csr-card">
+    <div class="csr-header">
+      <strong>ID:</strong> {{ csr.id }} |
+      <strong>CN:</strong> {{ csr.subject }} |
+      <strong>Requested Duration:</strong> {{ csr.requestedDurationDays }} days
+    </div>
+
+    <form [formGroup]="decisionForms[csr.id!]" class="csr-form">
+      <div>
+        <label>
+          Duration (days):
+          <input type="number" formControlName="finalDurationDays" min="1" />
+        </label>
+      </div>
+
+      <div>
+        <label>
+          <input type="checkbox" formControlName="approved" />
+          Approve
+        </label>
+      </div>
+
+      <div *ngIf="!decisionForms[csr.id!].value.approved">
+        <label>
+          Rejection Reason:
+          <input type="text" formControlName="rejectionReason" />
+        </label>
+      </div>
+
+      <div class="csr-actions">
+        <button type="button" (click)="approve(csr.id!)">Approve</button>
+        <button type="button" (click)="reject(csr.id!)">Reject</button>
+      </div>
+    </form>
+  </div>
+</div>
+

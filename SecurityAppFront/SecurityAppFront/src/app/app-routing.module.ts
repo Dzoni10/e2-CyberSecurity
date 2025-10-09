@@ -10,6 +10,10 @@ import { CsrFormComponent } from './csr/csr-form/csr-form.component';
 import { PasswordManagerComponent } from './password-manager/password-manager.component';
 import { CreateIntCertificateComponent } from './certificates/create-int-certificate/create-int-certificate.component';
 import { CreateEeCertificateComponent } from './certificates/create-ee-certificate/create-ee-certificate.component';
+import { CaCertificateListComponent } from './certificates/ca-certificate-list/ca-certificate-list.component';
+import { PendingCsrListComponent } from './csr/pending-csr-list/pending-csr-list.component';
+import { EeCertificateListComponent } from './certificates/ee-certificate-list/ee-certificate-list.component';
+import { CreateTemplateComponent } from './certificates/create-template/create-template.component';
 const routes: Routes = [
    { path: 'login', component: LoginComponent },
    { path: 'signup', component: SignupComponent},
@@ -17,8 +21,12 @@ const routes: Routes = [
    { path: 'activeTokens', component:SessionManagementComponent},
    { path: 'createRootCertificate', component:CreateRootCertificateComponent},
    { path: 'certificateList', component:CertificateListComponent},
+   { path: 'ca-certificateList', component:CaCertificateListComponent},
+   { path: 'ee-certificateList', component:EeCertificateListComponent},
+   { path: 'pending-csr-list', component:PendingCsrListComponent},
    { path: 'password-managment', component:PasswordManagerComponent},
    { path: 'csrForm', component:CsrFormComponent},
+   { path: 'create-template', component:CreateTemplateComponent},
    {path: 'create-intermediate',component:CreateIntCertificateComponent},
    {path: 'create-endEntity', component:CreateEeCertificateComponent}
   

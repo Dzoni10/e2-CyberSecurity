@@ -5,8 +5,9 @@ import com.example.securityapp.RepositoryInterfaces.CertificateRepositoryInterfa
 import com.example.securityapp.domain.CSRStatus;
 import com.example.securityapp.domain.Certificate;
 import com.example.securityapp.domain.CertificateSigningRequest;
-import com.example.securityapp.dto.CSRUploadRequestDTO;
-import com.example.securityapp.dto.CSRUploadResponseDTO;
+import com.example.securityapp.domain.User;
+import com.example.securityapp.dto.*;
+import jakarta.transaction.Transactional;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
@@ -24,6 +25,10 @@ import java.security.interfaces.RSAPublicKey;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class CSRService {
@@ -34,6 +39,11 @@ public class CSRService {
     @Autowired
     private CertificateRepositoryInterface certificateRepository;
 
+    @Autowired
+    private CertificateService certificateService;
+
+    @Autowired
+    private UserService userService;
     static {
         // register BouncyCastle once when class loads
         if (Security.getProvider("BC") == null) {
@@ -200,5 +210,92 @@ public class CSRService {
         System.out.println("DEBUG: Cannot determine userId from principal: " + principal);
         return 1; // fallback - PRIVREMENO
     }
+/*
+    public List<CertificateSigningRequest> getPendingCSRsForCAOrganization(String organization) {
+        List<Certificate> caCerts = certificateRepository.findAllByOrganization(organization);
+        List<Long> caIds = caCerts.stream().map(c -> (long) c.getId()).toList();
+        return csrRepository.findBySelectedCaIdInAndStatus(caIds, CSRStatus.PENDING);
+    }
+
+ */
+
+    @Transactional()
+    public List<CertificateSigningRequest> getPendingCSRsForCAOrganization(String organization) {
+        // 1️⃣ Nađi sve CA sertifikate iz te organizacije
+        List<Certificate> caCerts = certificateRepository.findAllByOrganization(organization);
+
+        if (caCerts.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 2️⃣ Izvuci njihove ID-jeve i konvertuj iz int → Long
+        List<Long> caIds = caCerts.stream()
+                .map(cert -> Long.valueOf(cert.getId())) // direktno pretvaranje iz int u Long
+                .collect(Collectors.toList());
+
+        // 3️⃣ Vrati CSR-ove koji čekaju obradu i vezani su za neki od CA-ova
+        return csrRepository.findBySelectedCaIdInAndStatus(caIds, CSRStatus.PENDING);
+    }
+
+
+
+
+    @Transactional
+    public void processCSRDecision(CSRDecisionDTO decision, String processedByEmail) {
+        CertificateSigningRequest csr = csrRepository.findById(decision.getCsrId())
+                .orElseThrow(() -> new RuntimeException("CSR not found"));
+
+        if (!csr.getStatus().equals(CSRStatus.PENDING)) {
+            throw new RuntimeException("CSR is not pending.");
+        }
+
+        User processedBy = userService.findByEmail(processedByEmail);
+                //.orElseThrow(() -> new RuntimeException("Processing user not found"));
+
+        if (decision.isApproved()) {
+            // 1. Kreiraj novi sertifikat
+            CertificateRequestDTO certReq = new CertificateRequestDTO();
+            certReq.setIssuerId((int)(long)csr.getSelectedCaId());
+            certReq.setCn(extractCNFromSubject(csr.getSubject()));
+            certReq.setO(extractOFromSubject(csr.getSubject()));
+            certReq.setOu(extractOUFromSubject(csr.getSubject()));
+            certReq.setC(extractCFromSubject(csr.getSubject()));
+            certReq.setDurationInDays(decision.getFinalDurationDays() != null ?
+                    decision.getFinalDurationDays() : csr.getRequestedDurationDays());
+            certReq.setPublicKey(csr.getPublicKey());
+            certReq.setEndEntity(true);
+
+            CertificateResponseDTO issuedCert = certificateService.issueCertificate(certReq);
+
+            csr.setIssuedCertificateId((long)issuedCert.getId());
+            csr.setStatus(CSRStatus.ISSUED);
+        } else {
+            // Odbijeno
+            csr.setStatus(CSRStatus.REJECTED);
+            csr.setRejectionReason(decision.getRejectionReason());
+        }
+        csr.setProcessedByUserId(processedBy.getId());
+        csr.setProcessedAt(LocalDateTime.now());
+        csrRepository.save(csr);
+    }
+
+    private String extractField(String subject, String field) {
+        if (subject == null) return null;
+        for (String part : subject.split(",")) {
+            part = part.trim();
+            if (part.startsWith(field + "=")) {
+                return part.substring((field + "=").length());
+            }
+        }
+        return null;
+    }
+
+    private String extractCNFromSubject(String subject) { return extractField(subject, "CN"); }
+    private String extractOFromSubject(String subject)  { return extractField(subject, "O"); }
+    private String extractOUFromSubject(String subject) { return extractField(subject, "OU"); }
+    private String extractCFromSubject(String subject)  { return extractField(subject, "C"); }
+
+
+
 
 }

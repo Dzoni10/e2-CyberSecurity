@@ -5,47 +5,34 @@ form {
 }
 
 .form-container {
-  width: 380px;
+  width: 420px;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  padding: 20px 25px;
-  background: white;
+  padding: 25px 30px;
+  background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 12px;
   backdrop-filter: blur(8px);
   box-shadow: 0 8px 24px rgba(31, 38, 135, 0.35);
-  color: black;
-  transition: 0.3s ease;
+  color: white;
 }
 
 mat-form-field {
   width: 100%;
 }
 
-mat-label {
-  color: black;
-}
-
-mat-error {
-  font-size: 0.85rem;
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .btnRegister {
   align-self: center;
   margin-top: 10px;
-  width: 150px;
+  width: 160px;
   background: linear-gradient(90deg, #2196f3, #21cbf3);
   color: white;
   font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-:host {
-  display: grid;
-  place-items: center;
-  height: 92vh;
-  background: linear-gradient(145deg, white, white);
-  background-size: cover;
-  background-position: center;
 }

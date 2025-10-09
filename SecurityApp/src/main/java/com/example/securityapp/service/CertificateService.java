@@ -8,6 +8,9 @@ import com.example.securityapp.domain.KeyStoreMeta;
 import com.example.securityapp.domain.User;
 import com.example.securityapp.dto.CertificateRequestDTO;
 import com.example.securityapp.dto.CertificateResponseDTO;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,12 +30,14 @@ public class CertificateService {
     private final CertificateRepositoryInterface certificateRepository;
     private final UserRepositoryInterface userRepositoryInterface;
     private final KeyStoreService keyStoreService;
+    private final CRLService crlService;
 
     @Autowired
-    public CertificateService(CertificateRepositoryInterface certificateRepository, UserRepositoryInterface userRepositoryInterface, KeyStoreService keyStoreService) {
+    public CertificateService(CertificateRepositoryInterface certificateRepository, UserRepositoryInterface userRepositoryInterface, KeyStoreService keyStoreService,  CRLService crlService) {
         this.certificateRepository = certificateRepository;
         this.userRepositoryInterface = userRepositoryInterface;
         this.keyStoreService = keyStoreService;
+        this.crlService = crlService;
     }
 
     public CertificateResponseDTO issueCertificate(CertificateRequestDTO request){
@@ -389,12 +394,59 @@ public class CertificateService {
         )).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<CertificateResponseDTO> getAllCACertificatesByOrg(String organization) {
+        return certificateRepository.findAllByOrganization(organization).stream().map(c->new CertificateResponseDTO(
+                c.getId(),
+                c.getAlias(),
+                c.getSerialNumber(),
+                c.getCn(),
+                c.getO(),
+                c.getOu(),
+                c.getC(),
+                c.getIssuer(),
+                c.getStartDate(),
+                c.getEndDate(),
+                c.getIssuerId(),
+                c.isRoot(),
+                c.isIntermediate(),
+                c.isEndEntity(),
+                c.isCA(),
+                c.isRevoked()
+        )).collect(Collectors.toList());
+    }
+
+    /*
     public void revokeCertificate(int id){
         Certificate certificate = certificateRepository.findById(id).orElseThrow(()-> new RuntimeException("Certificate not found") );
         certificate.setRevoked(true);
         certificateRepository.save(certificate);
     }
+*/
+    public void revokeCertificate(int id, String reason) {
+        Certificate cert = certificateRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Certificate not found"));
 
+        cert.setRevoked(true);
+
+        ObjectNode extJson;
+        try {
+            extJson = cert.getExtensions() != null
+                    ? (ObjectNode) new ObjectMapper().readTree(cert.getExtensions())
+                    : new ObjectMapper().createObjectNode();
+        } catch (JsonProcessingException e) {
+            extJson = new ObjectMapper().createObjectNode();
+        }
+
+        extJson.put("revocationReason", reason);
+        extJson.put("revocationDate", LocalDate.now().toString());
+        cert.setExtensions(extJson.toString());
+
+        certificateRepository.save(cert);
+
+        //dodavanje u crl
+        crlService.addRevocation((long)cert.getId(), cert.getSerialNumber(), reason);
+    }
 
     private static KeyPair generateRsaKeyPair() {
         try {
@@ -523,6 +575,11 @@ public class CertificateService {
         } catch (Exception e) {
             throw new RuntimeException("Chain verification failed: " + e.getMessage(), e);
         }
+    }
+
+    @Transactional
+    public List<Certificate> getEndEntityCertificatesForUser(Integer userId) {
+        return certificateRepository.findEndEntityCertificatesByUserId(userId);
     }
 
 }

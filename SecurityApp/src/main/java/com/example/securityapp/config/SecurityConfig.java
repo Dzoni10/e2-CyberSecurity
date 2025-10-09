@@ -52,8 +52,9 @@ public class SecurityConfig {
 
                         // Protected endpoints (role-based)
                         .requestMatchers(HttpMethod.GET, "/api/certificates/all").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/certificates/ca").hasRole("BASIC")
                         .requestMatchers(HttpMethod.POST, "/api/certificates/issue").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/certificates/ca").hasRole("BASIC")
+                        .requestMatchers(HttpMethod.GET, "/api/certificates/caOrg").hasAnyRole("BASIC", "CA")
                         .requestMatchers(HttpMethod.POST, "/api/csr/upload").hasRole("BASIC")
                         .requestMatchers(HttpMethod.GET, "/api/users/sessions").hasRole("BASIC")
 

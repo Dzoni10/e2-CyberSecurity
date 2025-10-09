@@ -19,6 +19,14 @@ public class UserService {
         return userRepositoryInterface.findUserByEmail(email);
     }
 
+    //public User findByUsername(String username){
+        //return userRepositoryInterface.findUserByUsername(username);
+    //}
+
+    public User findById(Integer id){
+        return userRepositoryInterface.findUserById(id);
+    }
+
     public User save(User user){
         return userRepositoryInterface.save(user);
     }

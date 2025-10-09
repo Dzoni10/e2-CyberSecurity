@@ -6,6 +6,8 @@ import { CertificatesService } from '../certificates.service';
 import { AuthService } from 'src/app/auth/auth.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { CertificateRequestDTO } from '../model/CertificateRequestDTO.model';
+import { CertificateTemplate } from '../model/CertificateTemplate.model';
+//import { MatSelectChange } from '@angular/material/select';
 
 @Component({
   selector: 'app-create-ee-certificate',
@@ -26,6 +28,8 @@ export class CreateEeCertificateComponent implements OnInit {
   userId!: number | null;
   issuerId!: number;
   maxDays!: number;
+  templates: CertificateTemplate[] = [];
+  selectedTemplate: CertificateTemplate | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -38,6 +42,8 @@ export class CreateEeCertificateComponent implements OnInit {
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
       this.issuerId = params['issuerId'];
+
+      this.loadTemplates()
 
       this.certificateService.getCertificateById(this.issuerId).subscribe(issuer => {
         const today = new Date();
@@ -90,6 +96,68 @@ export class CreateEeCertificateComponent implements OnInit {
     const currentUser = this.authService.getCurrentUser();
     this.userId = currentUser ? currentUser.userId : null;
   }
+
+  loadTemplates(){
+    this.certificateService.getAllTemplatesByIssuer(this.issuerId).subscribe({
+      next: (d: CertificateTemplate[]) => {
+      this.templates = d;
+    },
+    error: (err) => {
+      console.error('Error loading templates', err);
+      this.snackBar.open('Failed to load templates', 'Close', {
+        duration: 3000,
+        horizontalPosition: 'center'
+      });
+    }
+  });
+  }
+
+  onTemplateSelect(event: any) : void {
+  const templateId = event?.value;
+  if (!templateId) {
+    this.selectedTemplate = null;
+
+    // resetuj validatore ako se deselectuje šablon
+    this.endEntityForm.get('cn')?.setValidators([Validators.required]);
+    this.endEntityForm.get('san')?.clearValidators();
+    this.endEntityForm.get('cn')?.updateValueAndValidity();
+    this.endEntityForm.get('san')?.updateValueAndValidity();
+    return;
+  }
+
+  this.selectedTemplate = this.templates.find(t => t.id === templateId) || null;
+
+  if (this.selectedTemplate) {
+    // Patchuj TTL
+    if (this.selectedTemplate.ttlDays)
+      this.endEntityForm.patchValue({ durationInDays: this.selectedTemplate.ttlDays });
+
+    // Validatori po regexu — samo ako postoje regexi u šablonu
+    const cnValidators = [Validators.required];
+    if (this.selectedTemplate.commonNameRegex) {
+      try {
+        cnValidators.push(Validators.pattern(new RegExp(this.selectedTemplate.commonNameRegex)));
+      } catch {
+        console.warn('Invalid CN regex in template');
+      }
+    }
+
+    const sanValidators: any[] = [];
+    if (this.selectedTemplate.subjectAltNameRegex) {
+      try {
+        sanValidators.push(Validators.pattern(new RegExp(this.selectedTemplate.subjectAltNameRegex)));
+      } catch {
+        console.warn('Invalid SAN regex in template');
+      }
+    }
+
+    this.endEntityForm.get('cn')?.setValidators(cnValidators);
+    this.endEntityForm.get('san')?.setValidators(sanValidators);
+
+    this.endEntityForm.get('cn')?.updateValueAndValidity();
+    this.endEntityForm.get('san')?.updateValueAndValidity();
+  }
+}
 
   onSubmit() {
     if (this.endEntityForm.invalid) {

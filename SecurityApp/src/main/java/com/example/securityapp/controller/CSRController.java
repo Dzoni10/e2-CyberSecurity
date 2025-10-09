@@ -1,13 +1,17 @@
 package com.example.securityapp.controller;
 
+import com.example.securityapp.domain.CertificateSigningRequest;
+import com.example.securityapp.domain.User;
 import com.example.securityapp.dto.CSRDecisionDTO;
 import com.example.securityapp.dto.CSRReviewDTO;
 import com.example.securityapp.dto.CSRUploadRequestDTO;
 import com.example.securityapp.dto.CSRUploadResponseDTO;
 import com.example.securityapp.service.CSRService;
+import com.example.securityapp.service.UserService;
 import com.example.securityapp.validation.ValidFileExtension;
 import com.example.securityapp.validation.ValidFileSize;
 import com.example.securityapp.validation.ValidationConstants;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -17,12 +21,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/csr")
@@ -31,6 +38,9 @@ public class CSRController {
 
     @Autowired
     private CSRService csrService;
+
+    @Autowired
+    private UserService userService;
 
     @PostMapping("/upload")
     public ResponseEntity<?> uploadCSR(
@@ -100,4 +110,84 @@ public class CSRController {
         return ResponseEntity.ok().build();
     }
     */
+
+    @GetMapping("/pending")
+    @PreAuthorize("hasRole('CA')")
+    public ResponseEntity<List<CertificateSigningRequest>> getPendingCSRs(@RequestParam("userId") Integer userId) {
+        // Fetch the user's organization using userId
+        User user = userService.findById(userId);
+        String organization = user.getOrganization();
+
+        List<CertificateSigningRequest> pending = csrService.getPendingCSRsForCAOrganization(organization);
+        return ResponseEntity.ok(pending);
+    }
+
+    @PostMapping("/process")
+    @PreAuthorize("hasRole('CA')")
+    public ResponseEntity<?> processCSRDecision(
+            @Valid @RequestBody CSRDecisionDTO decision,
+            @RequestParam("userId") Integer userId, // dolazi sa frontenda
+            HttpServletRequest request) {
+
+        String ipAddress = getClientIpAddress(request);
+        String role = getCurrentUserRole();
+
+        try {
+            // Fetch username ili User objekat preko userId
+            User caUser = userService.findById(userId);
+            if (caUser == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("CA user not found for provided userId");
+            }
+
+            // Prosledi username ili ID u servis
+            csrService.processCSRDecision(decision, caUser.getEmail());
+
+            // Možeš vratiti neki DTO sa statusom
+            return ResponseEntity.ok(
+                    Map.of(
+                            "status", "SUCCESS",
+                            "csrId", decision.getCsrId(),
+                            "approved", decision.isApproved()
+                    )
+            );
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(
+                            Map.of(
+                                    "status", "FAILURE",
+                                    "csrId", decision.getCsrId(),
+                                    "message", e.getMessage()
+                            )
+                    );
+        }
+    }
+
+
+
+    private String getClientIpAddress(HttpServletRequest request) {
+        String ipAddress = request.getHeader("X-Forwarded-For");
+        if (ipAddress == null || ipAddress.isEmpty()) {
+            ipAddress = request.getRemoteAddr();
+        }
+        return ipAddress;
+    }
+
+    private String getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+            return auth.getName();
+        }
+        return "ANONYMOUS";
+    }
+
+    private String getCurrentUserRole() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getAuthorities() != null && !auth.getAuthorities().isEmpty()) {
+            return auth.getAuthorities().iterator().next().getAuthority();
+        }
+        return "UNKNOWN";
+    }
+
 }
