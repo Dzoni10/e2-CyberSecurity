@@ -1,0 +1,55 @@
+<form [formGroup]="templateForm" (ngSubmit)="onSubmit()">
+  <div class="form-container" @slideIn>
+
+    <h2>Create Certificate Template</h2>
+
+    <mat-form-field>
+      <mat-label>Template Name</mat-label>
+      <input matInput formControlName="name" placeholder="e.g. Web Server Template" />
+      <mat-error *ngIf="templateForm.get('name')?.hasError('required')">
+        Name is required.
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Validity (days)</mat-label>
+      <input matInput type="number" formControlName="ttlDays" min="1" />
+      <mat-error *ngIf="templateForm.get('ttlDays')?.invalid">
+        Must be a positive number.
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Common Name Regex</mat-label>
+      <input matInput formControlName="commonNameRegex" placeholder="e.g. ^[a-zA-Z0-9.-]+$" />
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Subject Alt Name Regex</mat-label>
+      <input matInput formControlName="subjectAltNameRegex" placeholder="e.g. ^[a-zA-Z0-9.-]+$" />
+    </mat-form-field>
+
+    <div class="checkbox-group">
+      <label>Key Usage:</label>
+      <mat-checkbox *ngFor="let usage of keyUsageOptions"
+                    [value]="usage"
+                    (change)="onCheckboxChange($event, 'keyUsage')">
+        {{ usage }}
+      </mat-checkbox>
+    </div>
+
+    <div class="checkbox-group">
+      <label>Extended Key Usage:</label>
+      <mat-checkbox *ngFor="let eku of extKeyUsageOptions"
+                    [value]="eku"
+                    (change)="onCheckboxChange($event, 'extendedKeyUsage')">
+        {{ eku }}
+      </mat-checkbox>
+    </div>
+
+    <button mat-raised-button color="primary" type="submit" class="btnRegister">
+      Create Template
+    </button>
+  </div>
+</form>
+

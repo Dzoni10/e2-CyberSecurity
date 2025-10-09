@@ -14,4 +14,8 @@ export interface CertificateResponse{
     endEntity: boolean,
     ca:boolean
     revoked:boolean
+
+    // dodajemo za front
+  showReasonInput?: boolean;
+  revocationReason?: string;
 }

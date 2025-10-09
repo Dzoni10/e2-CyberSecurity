@@ -1,11 +1,29 @@
 <form [formGroup]="endEntityForm" (ngSubmit)="onSubmit()">
   <div class="form-container" @slideIn>
+
+    <!--  ŠABLON SELEKTOR -->
+    <mat-form-field appearance="fill">
+      <mat-label>Use Template (optional)</mat-label>
+      <mat-select formControlName="templateId" (selectionChange)="onTemplateSelect($event)">
+        <mat-option [value]="null">None</mat-option>
+        <mat-option *ngFor="let template of templates" [value]="template.id">
+          {{ template.name }} (TTL: {{template.ttlDays}} days)
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-divider></mat-divider>
+
+    <!-- SUBJECT POLJA -->
     <mat-label>Subject</mat-label>
 
     <mat-form-field>
       <mat-label>Common Name (CN)</mat-label>
       <input matInput formControlName="cn" type="text" placeholder="e.g., www.example.com" maxlength="64"/>
       <mat-error *ngIf="hasError('cn')">{{ getErrorMessage('cn') }}</mat-error>
+      <mat-hint *ngIf="selectedTemplate?.commonNameRegex">
+        Must match regex: {{ selectedTemplate?.commonNameRegex }}
+      </mat-hint>
     </mat-form-field>
 
     <mat-form-field>
@@ -34,7 +52,20 @@
       <mat-hint>Max: {{maxDays}} days</mat-hint>
     </mat-form-field>
 
-    <button class="btnRegister" color="primary" type="submit" mat-raised-button [disabled]="endEntityForm.invalid">
+    <mat-form-field>
+      <mat-label>Subject Alternative Name (SAN)</mat-label>
+      <input matInput formControlName="san" type="text" placeholder="e.g., api.example.com" maxlength="128"/>
+      <mat-hint *ngIf="selectedTemplate?.subjectAltNameRegex">
+        Must match regex: {{ selectedTemplate?.subjectAltNameRegex }}
+      </mat-hint>
+    </mat-form-field>
+
+    <button
+      class="btnRegister"
+      color="primary"
+      type="submit"
+      mat-raised-button
+      [disabled]="endEntityForm.invalid">
       Create
     </button>
   </div>

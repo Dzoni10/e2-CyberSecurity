@@ -1,9 +1,13 @@
 package com.example.securityapp.controller;
 
+import com.example.securityapp.domain.Certificate;
+import com.example.securityapp.domain.User;
 import com.example.securityapp.dto.CertificateRequestDTO;
 import com.example.securityapp.dto.CertificateResponseDTO;
+import com.example.securityapp.dto.CertificateRevokeDTO;
 import com.example.securityapp.service.CertificateService;
 import com.example.securityapp.service.CustomLoggerService;
+import com.example.securityapp.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +26,9 @@ public class CertificateController {
 
     @Autowired
     private CertificateService certificateService;
+
+    @Autowired
+    private UserService userService;
 
     @Autowired
     private CustomLoggerService loggerService;
@@ -51,6 +58,39 @@ public class CertificateController {
 
         return ResponseEntity.ok(certificateService.getAllCACertificates());
     }
+
+    @GetMapping("/caOrg")
+    public ResponseEntity<List<CertificateResponseDTO>> getAllCACertificatesByOrg(
+            @RequestParam("userId") Integer userId,
+            HttpServletRequest request) {
+
+        String ipAddress = getClientIpAddress(request);
+        String username = getCurrentUser();
+        String role = getCurrentUserRole();
+
+        // Fetch the user's organization using userId
+        User user = userService.findById(userId);
+        String organization = user.getOrganization();
+
+        loggerService.logCertificateEvent(
+                "CA_CERTIFICATE_LIST_ACCESSED",
+                username,
+                role,
+                "SUCCESS",
+                "Retrieved all CA certificates for organization: " + organization,
+                ipAddress,
+                "N/A",
+                "N/A",
+                "N/A"
+        );
+
+        // Fetch certificates by organization and isCA=true
+        return ResponseEntity.ok(
+                certificateService.getAllCACertificatesByOrg(organization)
+        );
+    }
+
+
 
     @PostMapping(value="/issue")
     public CertificateResponseDTO issueCertificate(
@@ -97,14 +137,15 @@ public class CertificateController {
     }
 
     @PutMapping("/{id}/revoke")
-    public void revokeCertificate(@PathVariable int id, HttpServletRequest request){
+    public void revokeCertificate(@PathVariable int id,
+                                  @RequestParam String reason, HttpServletRequest request){
         String ipAddress = getClientIpAddress(request);
         String user = getCurrentUser();
         String role = getCurrentUserRole();
 
         try {
             CertificateResponseDTO cert = certificateService.getCertificateById(id);
-            certificateService.revokeCertificate(id);
+            certificateService.revokeCertificate(id, reason);
 
             String issuerInfo = cert.getIssuerId() != null ? "Issuer ID: " + cert.getIssuerId() : "SELF_SIGNED";
 
@@ -135,7 +176,7 @@ public class CertificateController {
         }
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/id/{id}")
     public ResponseEntity<CertificateResponseDTO> getById(@PathVariable int id, HttpServletRequest request) {
         String ipAddress = getClientIpAddress(request);
         String user = getCurrentUser();
@@ -215,6 +256,12 @@ public class CertificateController {
 
             return ResponseEntity.badRequest().body("Verification failed: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/by-user")
+    public ResponseEntity<List<Certificate>> getUserCertificates(@RequestParam("userId") Integer userId) {
+        List<Certificate> certs = certificateService.getEndEntityCertificatesForUser(userId);
+        return ResponseEntity.ok(certs);
     }
 
     private String getClientIpAddress(HttpServletRequest request) {

@@ -110,6 +110,16 @@ public class CertificateGenerator {
         }
         certBuilder.addExtension(Extension.authorityKeyIdentifier, false, aki);
 
+
+        // - CRL Distribution Point ekstenzija
+        String crlUrl = "http://localhost:8080/api/revocation/crl"; // <-- URL do CRL liste
+        GeneralName gn = new GeneralName(GeneralName.uniformResourceIdentifier, crlUrl);
+        GeneralNames gns = new GeneralNames(gn);
+        DistributionPointName dpn = new DistributionPointName(gns);
+        DistributionPoint distPoint = new DistributionPoint(dpn, null, null);
+        CRLDistPoint crlDistPoint = new CRLDistPoint(new DistributionPoint[]{distPoint});
+        certBuilder.addExtension(Extension.cRLDistributionPoints, false, crlDistPoint);
+
         // Potpis
         ContentSigner signer = new JcaContentSignerBuilder("SHA256withRSA")
                 .setProvider("BC")

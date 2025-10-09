@@ -1,0 +1,50 @@
+<div class="container">
+  <h2 class="title">📜 Certificates</h2>
+
+  <mat-progress-spinner *ngIf="loading" mode="indeterminate"></mat-progress-spinner>
+
+  <div class="grid" *ngIf="!loading">
+    <mat-card *ngFor="let cert of certificates" class="certificate-card" appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>{{ cert.alias }}</mat-card-title>
+        <mat-card-subtitle>Serial: {{ cert.serialNumber }}</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <p><b>Common Name (CN):</b> {{ cert.cn }}</p>
+        <p><b>Organization (O):</b> {{ cert.o }}</p>
+        <p><b>Organization Unit (OU):</b> {{ cert.ou }}</p>
+        <p><b>Country (C):</b> {{ cert.c }}</p>
+        <p><b>Issuer:</b> {{ cert.issuer }}</p>
+        <p><b>Valid From:</b> {{ cert.startDate | date }}</p>
+        <p><b>Valid To:</b> {{ cert.endDate | date }}</p>
+        <p><b>Status:</b> {{ cert.revoked ? 'Revoked' : 'Active' }}</p>
+      </mat-card-content>
+
+      <mat-card-actions>
+    <button *ngIf="!cert.revoked && !cert.showReasonInput"
+            mat-raised-button
+            color="primary"
+            (click)="cert.showReasonInput = true">
+      Revoke Certificate
+    </button>
+
+    <!-- inline input i confirm dugme -->
+    <div *ngIf="cert.showReasonInput" class="revoke-container">
+      <mat-form-field appearance="fill">
+        <mat-label>Revocation Reason</mat-label>
+        <input matInput [(ngModel)]="cert.revocationReason">
+      </mat-form-field>
+      <button mat-raised-button color="warn" (click)="revoke(cert, cert.revocationReason!)">
+        Confirm Revoke
+      </button>
+      <button mat-button (click)="cert.showReasonInput = false">
+        Cancel
+      </button>
+    </div>
+  </mat-card-actions>
+    </mat-card>
+  </div>
+</div>
+
+
