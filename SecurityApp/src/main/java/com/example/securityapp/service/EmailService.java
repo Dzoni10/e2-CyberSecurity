@@ -42,6 +42,28 @@ public class EmailService {
     }
 
     @Async
+    public void sendVerificationEmailCA(UserDTO userDTO,String randomPassword, String link) throws MailException, InterruptedException, MessagingException {
+
+        MimeMessage mail = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mail, true);
+
+        helper.setTo(userDTO.email);
+        helper.setFrom(env.getProperty("spring.mail.username"));
+        helper.setSubject("SecurityCertificateApp™ - Verification mail");
+
+        String verificationUrl = link;
+        String htmlMsg = "<p>Hello " + userDTO.name + ",</p>"
+                + "<p>Click on the link below to verify your account</p>"
+                + "<a href='" + verificationUrl + "'>Verify account</a>"
+                +"<p>This is your password: " +"<b>"+ randomPassword +"</b>   please change password when you log in</p>"
+                + "<p>Thank you!</p>"
+                +"<p>Your SecurityCertificateApp team</p>";
+
+        helper.setText(htmlMsg, true);
+        mailSender.send(mail);
+    }
+
+    @Async
     public void sendPasswordRecoveryEmail(UserDTO userDTO, String link) throws MailException, InterruptedException, MessagingException {
         MimeMessage mail = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(mail, true);

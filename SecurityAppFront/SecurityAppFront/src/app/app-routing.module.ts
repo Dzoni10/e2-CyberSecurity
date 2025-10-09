@@ -10,6 +10,7 @@ import { CsrFormComponent } from './csr/csr-form/csr-form.component';
 import { PasswordManagerComponent } from './password-manager/password-manager.component';
 import { CreateIntCertificateComponent } from './certificates/create-int-certificate/create-int-certificate.component';
 import { CreateEeCertificateComponent } from './certificates/create-ee-certificate/create-ee-certificate.component';
+import { CreateCaUserComponent } from './auth/create-ca-user/create-ca-user.component';
 const routes: Routes = [
    { path: 'login', component: LoginComponent },
    { path: 'signup', component: SignupComponent},
@@ -20,7 +21,8 @@ const routes: Routes = [
    { path: 'password-managment', component:PasswordManagerComponent},
    { path: 'csrForm', component:CsrFormComponent},
    {path: 'create-intermediate',component:CreateIntCertificateComponent},
-   {path: 'create-endEntity', component:CreateEeCertificateComponent}
+   {path: 'create-endEntity', component:CreateEeCertificateComponent},
+   {path: 'create-ca-user', component:CreateCaUserComponent}
   
 ];
 

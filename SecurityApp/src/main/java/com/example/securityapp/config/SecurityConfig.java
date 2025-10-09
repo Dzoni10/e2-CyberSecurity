@@ -49,6 +49,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/users/verify").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/recovery").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users/registerCA").hasRole("ADMIN")
 
                         // Protected endpoints (role-based)
                         .requestMatchers(HttpMethod.GET, "/api/certificates/all").hasRole("ADMIN")
