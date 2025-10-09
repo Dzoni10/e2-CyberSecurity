@@ -3,6 +3,7 @@
 
     <div class="navbar-buttons">
         <button mat-raised-button *ngIf="isLoggedIn()&&isLoggedAdmin()" class="create-root-certificate-button" [routerLink]="['createRootCertificate']">Create root certificate</button>
+        <button mat-raised-button *ngIf="isLoggedIn()&&isLoggedAdmin()" class="create-ca-certificate-button" [routerLink]="['create-ca-user']">Create CA user</button>
         <button mat-raised-button *ngIf="isLoggedIn()&&isLoggedCA()" class="create-ca-certificate-button">Create CA certificate</button>
         <button mat-raised-button *ngIf="isLoggedIn()" class="profile-button">User Profile</button>
         <button mat-raised-button *ngIf="isLoggedIn()&&isLoggedBasic()" class="basic-button">Basic certificates</button>

@@ -32,9 +32,16 @@ public class User {
     @Column(name="is_verified",nullable = false)
     private boolean isVerified;
 
+    @Column(name="must_change_password",nullable = false)
+    private boolean mustChangePassword;
+
+    @Column(name="first_login",nullable = false)
+    private boolean firstLogin;
+
+
     public User(){}
 
-    public User(int id, String name, String surname, String email , String password, Role role,String organization, boolean isVerified) {
+    public User(int id, String name, String surname, String email , String password, Role role,String organization, boolean isVerified,boolean mustChangePassword,boolean firstLogin) {
         this.id = id;
         this.name = name;
         this.surname = surname;
@@ -43,9 +50,11 @@ public class User {
         this.role = role;
         this.organization=organization;
         this.isVerified=isVerified;
+        this.mustChangePassword=mustChangePassword;
+        this.firstLogin=firstLogin;
     }
 
-    public User( String name, String surname, String email , String password, Role role,String organization, boolean isVerified) {
+    public User( String name, String surname, String email , String password, Role role,String organization, boolean isVerified,boolean mustChangePassword,boolean firstLogin) {
         this.name = name;
         this.surname = surname;
         this.email = email;
@@ -53,6 +62,8 @@ public class User {
         this.role = role;
         this.organization=organization;
         this.isVerified=isVerified;
+        this.mustChangePassword=mustChangePassword;
+        this.firstLogin=firstLogin;
     }
 
     public int getId() {
@@ -116,5 +127,21 @@ public class User {
     }
     public void setVerified(boolean isVerified) {
         this.isVerified = isVerified;
+    }
+
+    public boolean isMustChangePassword() {
+        return mustChangePassword;
+    }
+
+    public void setMustChangePassword(boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
+    }
+
+    public boolean isFirstLogin() {
+        return firstLogin;
+    }
+
+    public void setFirstLogin(boolean firstLogin) {
+        this.firstLogin = firstLogin;
     }
 }
